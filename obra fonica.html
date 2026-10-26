@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<title>Obra Fônica</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: cabeçalho com faixa de obra, filtros, e um treemap em 3 níveis (categoria > serviço > contato) que ocupa a tela */
+:root{
+  --bg:#EDF0F3; --surface:#FFFFFF; --ink:#141A22; --mut:#5A6571; --line:#D2D8DF;
+  --ac:#F2B705; --ac-ink:#141A22; --focus:#1D5BD6; --danger:#B3261E; --ok:#1E7A46;
+  --stripe-dark:#141A22; --shadow:0 10px 34px rgba(20,26,34,.22);
+  --fs:42%; --fl:84%; --ss:48%; --sl:92%; --ts:52%; --tl:97%; --txs:55%; --txl:16%;
+  --font-d:'Barlow Condensed','Arial Narrow',Arial,sans-serif;
+  --font-b:'Barlow',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1319; --surface:#171C24; --ink:#E8ECF1; --mut:#97A2AF; --line:#2B333E;
+    --ac:#F2B705; --ac-ink:#141A22; --focus:#6EA0FF; --danger:#FF8A80; --ok:#6FD39A;
+    --stripe-dark:#0A0D11; --shadow:0 10px 34px rgba(0,0,0,.55);
+    --fs:30%; --fl:21%; --ss:32%; --sl:29%; --ts:34%; --tl:37%; --txs:45%; --txl:94%;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1319; --surface:#171C24; --ink:#E8ECF1; --mut:#97A2AF; --line:#2B333E;
+  --ac:#F2B705; --ac-ink:#141A22; --focus:#6EA0FF; --danger:#FF8A80; --ok:#6FD39A;
+  --stripe-dark:#0A0D11; --shadow:0 10px 34px rgba(0,0,0,.55);
+  --fs:30%; --fl:21%; --ss:32%; --sl:29%; --ts:34%; --tl:37%; --txs:45%; --txl:94%;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;font:400 15px/1.4 var(--font-b);color:var(--ink);background:var(--bg);
+  padding-block:12px 28px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px))}
+body.lock{overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.mut{color:var(--mut)}
+
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.brand{min-width:0}
+.brand h1{margin:0;font:700 32px/1 var(--font-d);text-transform:uppercase;letter-spacing:.05em}
+.sub{display:block;margin-top:4px;color:var(--mut);font-size:13px}
+.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stripe{height:6px;border-radius:2px;background:repeating-linear-gradient(135deg,var(--ac) 0 9px,var(--stripe-dark) 9px 18px)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font-weight:500;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn:hover{border-color:var(--mut)}
+.btn.primary{background:var(--ac);border-color:var(--ac);color:var(--ac-ink);font-weight:600}
+.btn.primary:hover{filter:brightness(.95)}
+.btn.wa{background:var(--ink);border-color:var(--ink);color:var(--bg);font-weight:600}
+.btn.danger{color:var(--danger);border-color:var(--danger)}
+.btn.sm{min-height:32px;padding:0 10px;font-size:13px}
+.btn.icon{padding:0;width:40px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--mut)}
+#syncChip[data-s="synced"] .dot{background:var(--ok)}
+#syncChip[data-s="saving"] .dot{background:var(--ac)}
+#syncChip[data-s="erro"] .dot{background:var(--danger)}
+
+#banner{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 12px;border:1px dashed var(--mut);border-radius:6px;font-size:14px}
+
+.tools{display:flex;flex-wrap:wrap;gap:8px}
+.tools input,.tools select,.field input,.field select,.li input{height:40px;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:0 10px;font-size:16px;min-width:0}
+.tools #q{flex:2 1 230px}
+.tools select{flex:1 1 150px}
+
+.acc{display:flex;flex-direction:column;gap:8px}
+.ac{border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden}
+.ac-h{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:0 14px 0 0;border:0;background:var(--surface);color:var(--ink);text-align:left;cursor:pointer}
+.ac-h .bar{align-self:stretch;width:8px;flex:none;background:hsl(var(--h) 62% 52%)}
+.ac-h .nm{flex:1;min-width:0;font:600 19px/1.1 var(--font-d);text-transform:uppercase;letter-spacing:.06em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ac-h em{font:600 13px/1 var(--font-b);font-style:normal;padding:5px 10px;border-radius:999px;background:hsl(var(--h) var(--fs) var(--fl));color:hsl(var(--h) var(--txs) var(--txl))}
+.ac-h svg{flex:none}
+.ac.open .ac-h{background:hsl(var(--h) var(--fs) var(--fl));color:hsl(var(--h) var(--txs) var(--txl))}
+.ac.open .ac-h em{background:hsl(var(--h) var(--ss) var(--sl))}
+.ac.open .ac-h svg{transform:rotate(180deg)}
+.ac-b{background:hsl(var(--h) var(--ss) var(--sl));color:hsl(var(--h) var(--txs) var(--txl));padding:4px 8px 10px}
+.sg{margin-top:4px}
+.sg-h{display:flex;align-items:center;gap:6px;width:100%;min-height:40px;padding:0 6px;border:0;background:none;color:inherit;text-align:left;cursor:pointer;font:600 14px/1 var(--font-d);text-transform:uppercase;letter-spacing:.08em}
+.sg-h svg{width:15px;height:15px;flex:none}
+.sg-h[aria-expanded="false"] svg{transform:rotate(-90deg)}
+.sg-h span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sg-h small{font:600 12px var(--font-b);opacity:.7}
+.rows{display:flex;flex-direction:column;gap:4px;margin:0;padding:0;list-style:none}
+.rw{display:flex;align-items:stretch;gap:6px;min-height:58px;border-radius:6px;background:hsl(var(--h) var(--ts) var(--tl))}
+.rw-main{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:8px 4px 8px 12px;border:0;background:none;color:inherit;text-align:left;cursor:pointer}
+.rw-main b{font-weight:600;font-size:15.5px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rw-main span{font-size:12.5px;opacity:.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wa{align-self:center;flex:none;display:inline-flex;align-items:center;gap:6px;min-height:42px;margin-right:8px;padding:0 13px;border-radius:6px;background:var(--ink);color:var(--bg);font-weight:600;font-size:13.5px;text-decoration:none}
+.wa:hover{filter:brightness(1.15)}
+.empty{margin:8px 8px 4px;font-size:14px;opacity:.8}
+.empty-all{margin:14px 4px;text-align:center;color:var(--mut)}
+
+#overlay{position:fixed;inset:0;z-index:50;background:rgba(10,14,19,.58);display:flex;align-items:flex-end;justify-content:center}
+#sheet{width:100%;max-width:580px;max-height:92dvh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px 14px 0 0;box-shadow:var(--shadow);padding:18px max(18px,env(safe-area-inset-left,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px))}
+@media (min-width:700px){#overlay{align-items:center;padding:20px}#sheet{border-radius:12px}}
+.sh-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.sh-head h2{margin:0;font:700 28px/1.05 var(--font-d);text-transform:uppercase;letter-spacing:.03em}
+.sh-head p{margin:4px 0 0}
+.x{width:36px;height:36px;border:1px solid var(--line);border-radius:6px;background:var(--surface);font-size:20px;line-height:1;cursor:pointer;flex:none}
+.x.sm{width:32px;height:32px;font-size:18px}
+.x:disabled{opacity:.35;cursor:not-allowed}
+#sheet h3{margin:20px 0 8px;font:600 14px/1 var(--font-d);text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
+.telbig{font:600 24px/1.1 var(--font-b);font-variant-numeric:tabular-nums;margin:14px 0 10px}
+.acts{display:flex;flex-wrap:wrap;gap:8px}
+.acts .btn{flex:1 1 110px}
+.field{display:flex;flex-direction:column;gap:5px;margin-top:12px}
+.field label{font-size:13px;color:var(--mut);font-weight:500}
+.field input,.field select{width:100%}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chipbtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer}
+.chipbtn[aria-pressed="true"],.chipbtn.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chipbtn[data-h]{border-left:6px solid hsl(var(--h) 60% 55%)}
+.hint{margin:8px 0 0;font-size:13px;color:var(--ok)}
+.pps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.pp{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.pp-top{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.pp-top strong{font-weight:600}
+.pp .mv{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pp .mv small{color:var(--mut);margin-right:2px}
+.pp-foot{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:12.5px;color:var(--mut);flex-wrap:wrap}
+.pp-foot button{border:0;background:none;color:var(--danger);cursor:pointer;padding:4px 0;font-size:13px}
+.row2{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.row2 .btn{flex:1 1 130px}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+.li{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.li input{flex:1}
+.li .n{width:24px;text-align:right;font-size:12px}
+.note{font-size:13px;color:var(--mut);margin:6px 0 0}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:80;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;max-width:min(92vw,520px);box-shadow:var(--shadow)}
+@media (prefers-reduced-motion:no-preference){.ac-h svg,.sg-h svg{transition:transform .15s}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>Obra Fônica</h1><span class="sub" id="stats"></span></div>
+    <div class="top-actions">
+      <button class="btn sm" id="syncChip" data-s="local"><span class="dot"></span><span id="syncTxt">Só neste aparelho</span></button>
+      <button class="btn sm" id="btnSettings">Ajustes</button>
+      <button class="btn icon sm" id="btnTheme" aria-label="Alternar tema claro e escuro" title="Alternar tema"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
+    </div>
+  </header>
+  <div class="stripe"></div>
+  <div id="banner" hidden></div>
+  <section class="tools" aria-label="Filtros">
+    <input id="q" type="search" placeholder="Buscar nome, empresa ou telefone" autocomplete="off" aria-label="Buscar">
+    <select id="fObra" aria-label="Filtrar por obra"></select>
+    <select id="fCat" aria-label="Filtrar por categoria"></select>
+    <select id="fServ" aria-label="Filtrar por classificação"></select>
+    <button class="btn primary" id="btnAdd">+ Novo contato</button>
+  </section>
+  <main class="acc" id="acc" aria-label="Contatos por categoria"></main>
+</div>
+<div id="overlay" hidden><div id="sheet" role="dialog" aria-modal="true" aria-label="Detalhes"></div></div>
+<div id="toast" role="status" hidden></div>
+
+<script>
+(function(){
+'use strict';
+var KEY='obrafonica.v1', GHKEY='obrafonica.gh', THKEY='obrafonica.tema', OBRAKEY='obrafonica.obra';
+var HUES=[44,208,152,270,348,180,24,300,100,230];
+var PAD=3, HEAD=24, SEMCLASS='Sem classificação';
+var $=function(s){return document.querySelector(s)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&','<':'<','>':'>','"':'"',"'":'''}[c]})};
+var now=function(){return new Date().toISOString()};
+var uid=function(){return Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-4)};
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+
+/* ---------- dados ---------- */
+function freshDb(){
+  return {v:1,updatedAt:now(),exemplo:false,obras:[],
+    categorias:[{id:'orc',nome:'Orçamento',h:44},{id:'emp',nome:'Empreiteiro',h:208},{id:'par',nome:'Parceiro',h:152},{id:'adm',nome:'Administração de obra',h:270},{id:'com',nome:'Compras',h:348}],
+    servicos:['Eletricista','Gesseiro','Pintor','Aluguel de caçamba','Financeiro','Controle','Arquitetura'],
+    contatos:[],papeis:[]};
+}
+function exampleDb(){
+  var d=freshDb(); d.exemplo=true;
+  d.obras=[{id:'oa',nome:'Obra A (exemplo)'},{id:'ob',nome:'Obra B (exemplo)'}];
+  function ct(tel,nome,emp){d.contatos.push({tel:tel,nome:nome,empresa:emp})}
+  function pp(tel,obra,cat,serv){d.papeis.push({id:uid(),tel:tel,obra:obra,categoria:cat,servico:serv,hist:[]})}
+  ct('5511999990001','João Pereira','JP Elétrica'); pp('5511999990001','oa','emp','Eletricista'); pp('5511999990001','oa','orc','Pintor'); pp('5511999990001','ob','orc','Eletricista');
+  ct('5511999990002','Marcos Lima','Gesso Lima'); pp('5511999990002','oa','emp','Gesseiro');
+  ct('5511999990003','Paulo Mendes','Pinturas PM'); pp('5511999990003','ob','orc','Pintor'); pp('5511999990003','oa','orc','Pintor');
+  ct('5511999990004','Rafael Dias','Caçambas Rápidas'); pp('5511999990004','oa','par','Aluguel de caçamba'); pp('5511999990004','ob','com','Aluguel de caçamba');
+  ct('5511999990005','Ana Ribeiro','Studio AR'); pp('5511999990005','oa','par','Arquitetura');
+  ct('5511999990006','Fernanda Alves','Escritório Central'); pp('5511999990006','oa','adm','Financeiro'); pp('5511999990006','ob','adm','Financeiro');
+  ct('5511999990007','Ricardo Costa','Escritório Central'); pp('5511999990007','oa','adm','Controle');
+  ct('5511999990008','Sérgio Tavares','Tavares Elétrica'); pp('5511999990008','ob','orc','Eletricista');
+  return d;
+}
+function loadLocal(){var r=lsGet(KEY);if(r){try{var d=JSON.parse(r);if(d&&d.papeis&&d.categorias)return d}catch(e){}}return null}
+var db=loadLocal()||exampleDb();
+var ui={q:'',obra:lsGet(OBRAKEY)||'',fcat:'',fserv:'',open:null,closed:{}};
+function realObra(){return (ui.obra&&ui.obra!=='__none')?ui.obra:''}
+function setObra(v){ui.obra=v;lsSet(OBRAKEY,v);render()}
+var S={type:null};
+
+function cOf(tel){return db.contatos.find(function(c){return c.tel===tel})||{tel:tel,nome:'',empresa:''}}
+function catOf(id){return db.categorias.find(function(c){return c.id===id})||{id:id,nome:'(categoria removida)',h:220}}
+function obraName(id){if(!id)return 'Sem obra';var o=db.obras.find(function(o){return o.id===id});return o?o.nome:'Sem obra'}
+function normTel(raw){
+  var d=String(raw||'').replace(/\D/g,'').replace(/^0+/,'');
+  if(d.length===10||d.length===11)d='55'+d;
+  if(d.indexOf('55')===0&&d.length===12&&/^[6-9]/.test(d.slice(4)))d=d.slice(0,4)+'9'+d.slice(4);
+  return (d.length>=10&&d.length<=15)?d:'';
+}
+function fmtTel(t){
+  if(t.indexOf('55')===0&&t.length===13)return '+55 ('+t.slice(2,4)+') '+t.slice(4,9)+'-'+t.slice(9);
+  if(t.indexOf('55')===0&&t.length===12)return '+55 ('+t.slice(2,4)+') '+t.slice(4,8)+'-'+t.slice(8);
+  return '+'+t;
+}
+function initials(s){var p=String(s||'?').trim().split(/\s+/);return ((p[0]||'?')[0]+(p.length>1?p[p.length-1][0]:'')).toUpperCase()}
+
+/* ---------- persistência ---------- */
+function saveLocal(){lsSet(KEY,JSON.stringify(db))}
+function commit(rerender){
+  db.updatedAt=now();saveLocal();
+  if(rerender!==false)render();
+}
+
+/* ---------- consultas ---------- */
+function filtered(){
+  var q=ui.q.trim().toLowerCase(),qd=q.replace(/\D/g,'');
+  return db.papeis.filter(function(p){
+    if(ui.obra){if(ui.obra==='__none'?p.obra!=='':p.obra!==ui.obra)return false}
+    if(ui.fcat&&p.categoria!==ui.fcat)return false;
+    if(ui.fserv&&p.servico!==ui.fserv)return false;
+    if(q){
+      var c=cOf(p.tel);
+      var hay=[c.nome,c.empresa,p.servico,obraName(p.obra),catOf(p.categoria).nome].join(' ').toLowerCase();
+      if(!(hay.indexOf(q)>-1||(qd.length>=3&&p.tel.indexOf(qd)>-1)))return false;
+    }
+    return true;
+  });
+}
+function groupBy(arr,fn){var m=new Map();arr.forEach(function(x){var k=fn(x);if(!m.has(k))m.set(k,[]);m.get(k).push(x)});return Array.from(m,function(e){return {k:e[0],items:e[1]}})}
+function byName(a,b){return (cOf(a.tel).nome||'').localeCompare(cOf(b.tel).nome||'','pt-BR')}
+
+/* ---------- lista em linhas ---------- */
+var acc=$('#acc');
+var CHEV='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+var WAICON='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 20.5l1.7-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>';
+function rowHtml(p){
+  var c=cOf(p.tel),nome=c.nome||fmtTel(p.tel),sub=[c.empresa,(p.obra&&!ui.obra)?obraName(p.obra):''].filter(Boolean).join(' · ');
+  return '<li class="rw" data-id="'+p.id+'"><button class="rw-main" data-act="row" data-id="'+p.id+'"><b>'+esc(nome)+'</b>'+(sub?'<span>'+esc(sub)+'</span>':'')+'</button><a class="wa" href="https://wa.me/'+p.tel+'" target="_blank" rel="noopener" aria-label="Abrir conversa de '+esc(nome)+' no WhatsApp">'+WAICON+'WhatsApp</a></li>';
+}
+function catSection(c,items,open,q){
+  var h='<section class="ac'+(open?' open':'')+'" style="--h:'+c.h+'"><button class="ac-h" data-act="cat" data-cat="'+c.id+'" aria-expanded="'+open+'"><span class="bar"></span><span class="nm">'+esc(c.nome)+'</span><em>'+items.length+'</em>'+CHEV+'</button>';
+  if(open){
+    h+='<div class="ac-b">';
+    if(!items.length)h+='<p class="empty">Nenhum contato aqui ainda. Toque em “+ Novo contato” para adicionar.</p>';
+    else{
+      var groups=groupBy(items,function(p){return p.servico}).sort(function(a,b){
+        if(a.k===SEMCLASS)return 1;if(b.k===SEMCLASS)return -1;return a.k.localeCompare(b.k,'pt-BR')});
+      groups.forEach(function(g){
+        var key=c.id+'|'+g.k,closed=!q&&ui.closed[key];
+        h+='<div class="sg"><button class="sg-h" data-act="sv" data-key="'+esc(key)+'" aria-expanded="'+!closed+'">'+CHEV+'<span>'+esc(g.k)+'</span><small>'+g.items.length+'</small></button>';
+        if(!closed)h+='<ul class="rows">'+g.items.slice().sort(byName).map(rowHtml).join('')+'</ul>';
+        h+='</div>';
+      });
+    }
+    h+='</div>';
+  }
+  return h+'</section>';
+}
+function renderList(){
+  var P=filtered(),q=ui.q.trim()!=='',narrow=q||ui.obra||ui.fcat||ui.fserv,html='';
+  if(ui.open&&!db.categorias.some(function(c){return c.id===ui.open}))ui.open=null;
+  db.categorias.forEach(function(c){
+    var items=P.filter(function(p){return p.categoria===c.id});
+    if(narrow&&!items.length)return;
+    html+=catSection(c,items,q?true:ui.open===c.id,q);
+  });
+  if(!db.papeis.length)html+='<p class="empty-all">Sua agenda está vazia. Toque em “+ Novo contato” para começar.</p>';
+  else if(narrow&&!P.length)html+='<p class="empty-all">'+((ui.obra&&!q&&!ui.fcat&&!ui.fserv)?'Nenhum contato nesta obra ainda. Toque em “+ Novo contato” para adicionar.':'Nada encontrado com esses filtros.')+'</p>';
+  acc.innerHTML=html;
+}
+var f0=db.categorias.find(function(c){return db.papeis.some(function(p){return p.categoria===c.id})});
+ui.open=f0?f0.id:null;
+
+/* ---------- cabeçalho e filtros ---------- */
+function fillSelect(sel,first,opts,val){
+  sel.innerHTML='<option value="">'+esc(first)+'</option>'+opts.map(function(o){return '<option value="'+esc(o[0])+'">'+esc(o[1])+'</option>'}).join('');
+  sel.value=opts.some(function(o){return o[0]===val})?val:'';
+  return sel.value;
+}
+function renderChrome(){
+  $('#stats').textContent=db.contatos.length+' contatos · '+db.papeis.length+' serviços em '+db.obras.length+' obras';
+  if(ui.obra&&ui.obra!=='__none'&&!db.obras.some(function(o){return o.id===ui.obra}))ui.obra='';
+  if(ui.obra==='__none'&&!db.papeis.some(function(p){return !p.obra}))ui.obra='';
+  var o=db.obras.map(function(o){return [o.id,o.nome]});
+  if(db.papeis.some(function(p){return !p.obra}))o.push(['__none','Sem obra']);
+  o.push(['__newobra','+ Nova obra…']);
+  ui.obra=fillSelect($('#fObra'),'Todas as obras',o,ui.obra);
+  ui.fcat=fillSelect($('#fCat'),'Todas as categorias',db.categorias.map(function(c){return [c.id,c.nome]}),ui.fcat);
+  var sv=db.servicos.slice();db.papeis.forEach(function(p){if(sv.indexOf(p.servico)<0)sv.push(p.servico)});
+  ui.fserv=fillSelect($('#fServ'),'Todas as classificações',sv.map(function(s){return [s,s]}),ui.fserv);
+  var b=$('#banner');
+  if(db.exemplo){b.hidden=false;b.innerHTML='<span>Você está vendo <b>dados de exemplo</b>. Apague para começar a sua agenda.</span><button class="btn sm" data-act="clear-ex">Apagar exemplos</button>'}
+  else b.hidden=true;
+}
+function render(){renderChrome();renderList();if(S.type)refreshSheet()}
+
+function ensureObra(nome){
+  nome=(nome||'').trim();if(!nome)return '';
+  var o=db.obras.find(function(o){return o.nome.toLowerCase()===nome.toLowerCase()});
+  if(o)return o.id;o={id:uid(),nome:nome};db.obras.push(o);return o.id;
+}
+function ensureServ(s){
+  s=(s||'').trim();if(!s||s===SEMCLASS)return SEMCLASS;
+  var f=db.servicos.find(function(x){return x.toLowerCase()===s.toLowerCase()});
+  if(f)return f;db.servicos.push(s);return s;
+}
+
+/* ---------- modais (sheets) ---------- */
+var overlay=$('#overlay'),sheet=$('#sheet');
+function openSheet(){overlay.hidden=false;document.body.classList.add('lock');refreshSheet(true)}
+function closeSheet(){overlay.hidden=true;document.body.classList.remove('lock');S={type:null}}
+function refreshSheet(focus){
+  if(!S.type)return;
+  var top=sheet.scrollTop;
+  sheet.innerHTML=S.type==='contact'?sheetContact():S.type==='new'?sheetNew():S.type==='obra'?sheetObra():sheetSettings();
+  sheet.scrollTop=top;
+  if(focus){var f=sheet.querySelector('input:not([type=file]),button.x');if(f&&S.type!=='contact')f.focus()}
+}
+function papelFields(){
+  var opts=db.categorias.map(function(c){return '<option value="'+c.id+'">'+esc(c.nome)+'</option>'}).join('');
+  var pre=realObra(),oo=db.obras.map(function(o){return '<option value="'+esc(o.id)+'"'+(o.id===pre?' selected':'')+'>'+esc(o.nome)+'</option>'}).join('');
+  return '<div class="field"><label for="f-obra">Obra</label><select id="f-obra"><option value="">Sem obra</option>'+oo+'<option value="__new">+ Nova obra…</option></select><input id="f-obra-new" placeholder="Nome da nova obra" autocomplete="off" hidden></div>'
+   +'<div class="field"><label for="f-cat">Categoria</label><select id="f-cat">'+opts+'</select></div>'
+   +'<div class="field"><label>Classificação</label><div class="chips" id="f-servs">'+db.servicos.map(function(s){return '<button type="button" class="chipbtn" aria-pressed="false" data-act="tog" data-v="'+esc(s)+'">'+esc(s)+'</button>'}).join('')+'</div><input id="f-serv-new" placeholder="Outra classificação" autocomplete="off"></div>';
+}
+function readPapelFields(){
+  var servs=Array.prototype.map.call(sheet.querySelectorAll('#f-servs [aria-pressed="true"]'),function(b){return b.dataset.v}).concat($('#f-serv-new').value.split(',').map(function(s){return s.trim()}).filter(Boolean));
+  var sel=$('#f-obra').value,obra='';
+  if(sel==='__new')obra=$('#f-obra-new').value.trim();
+  else if(sel){var ob=db.obras.find(function(x){return x.id===sel});obra=ob?ob.nome:''}
+  return {obra:obra,cat:$('#f-cat').value,servs:servs};
+}
+function sheetObra(){
+  return '<div class="sh-head"><div><h2>Nova obra</h2><p class="mut">Organize seus contatos por obra.</p></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>'
+   +'<div class="field"><label for="o-nome">Nome da obra</label><input id="o-nome" placeholder="Ex.: Residencial Bella Vista" autocomplete="off"></div>'
+   +'<div class="row2"><button class="btn primary" data-act="save-obra">Criar obra</button><button class="btn" data-act="close">Cancelar</button></div>';
+}
+function sheetNew(){
+  return '<div class="sh-head"><div><h2>Novo contato</h2><p class="mut">O número é a chave: se já existir, o serviço é adicionado ao contato.</p></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>'
+   +'<div class="field"><label for="f-tel">Telefone (com DDD)</label><input id="f-tel" type="tel" inputmode="tel" placeholder="(11) 99999-0000" autocomplete="off"></div>'
+   +'<div class="field"><label for="f-nome">Nome</label><input id="f-nome" autocomplete="off"></div>'
+   +'<div class="field"><label for="f-emp">Empresa</label><input id="f-emp" autocomplete="off"></div>'
+   +papelFields()
+   +'<div class="row2"><button class="btn primary" data-act="save-new">Salvar contato</button><button class="btn" data-act="close">Cancelar</button></div>';
+}
+function sheetContact(){
+  var c=db.contatos.find(function(x){return x.tel===S.tel});
+  if(!c){setTimeout(closeSheet,0);return ''}
+  var ps=db.papeis.filter(function(p){return p.tel===c.tel});
+  var h='<div class="sh-head"><div><h2>'+esc(c.nome||'Sem nome')+'</h2><p class="mut">'+esc(c.empresa||'Sem empresa')+'</p></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>';
+  if(S.editing){
+    h+='<div class="field"><label>Nome</label><input id="e-nome" value="'+esc(c.nome)+'"></div>'
+      +'<div class="field"><label>Empresa</label><input id="e-emp" value="'+esc(c.empresa)+'"></div>'
+      +'<div class="row2"><button class="btn primary" data-act="save-edit">Salvar</button><button class="btn" data-act="cancel-edit">Cancelar</button></div>';
+  } else {
+    h+='<p class="telbig">'+fmtTel(c.tel)+'</p>'
+      +'<div class="acts"><a class="btn wa" href="https://wa.me/'+c.tel+'" target="_blank" rel="noopener">'+WAICON+'WhatsApp</a><button class="btn" data-act="edit-contact">Editar contato</button><button class="btn danger" data-act="del-contact">Excluir</button></div>'
+      +'<h3>Atuações e Obras</h3><ul class="pps">'
+      +ps.map(function(p){
+        var cat=catOf(p.categoria);
+        return '<li class="pp"><div class="pp-top"><strong>'+esc(p.servico)+'</strong><span class="mut">('+esc(cat.nome)+')</span></div>'
+          +'<div class="pp-foot"><span>'+esc(obraName(p.obra))+'</span><button data-act="del-pp" data-id="'+p.id+'">remover papel</button></div></li>';
+      }).join('')+'</ul>'
+      +'<h3>Adicionar a outra obra/categoria</h3>'+papelFields()
+      +'<div class="row2"><button class="btn primary" data-act="add-papel">Adicionar papel</button></div>';
+  }
+  return h;
+}
+function sheetSettings(){
+  return '<div class="sh-head"><div><h2>Ajustes</h2><p class="mut">Gerencie seus dados e exemplo.</p></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>'
+   +'<h3>Dados</h3><div class="acts"><button class="btn" data-act="export">Exportar Backup (JSON)</button><button class="btn" data-act="import-btn">Importar Backup</button><input type="file" id="importFile" accept=".json" hidden></div>'
+   +'<h3>Zerar / Exemplos</h3><div class="acts"><button class="btn danger" data-act="clear-ex">Apagar dados de exemplo</button><button class="btn danger" data-act="reset-all">Apagar tudo (Zerar agenda)</button></div>';
+}
+
+/* ---------- eventos da interface ---------- */
+document.addEventListener('input',function(e){
+  if(e.target.id==='q'){ui.q=e.target.value;renderList()}
+  if(e.target.id==='f-obra'&&e.target.value==='__new'){$('#f-obra-new').hidden=false;$('#f-obra-new').focus()}
+  else if(e.target.id==='f-obra'){$('#f-obra-new').hidden=true}
+});
+document.addEventListener('change',function(e){
+  if(e.target.id==='fObra')setObra(e.target.value);
+  if(e.target.id==='fCat'){ui.fcat=e.target.value;renderList()}
+  if(e.target.id==='fServ'){ui.fserv=e.target.value;renderList()}
+});
+document.addEventListener('click',function(e){
+  var btn=e.target.closest('button, [data-act]');if(!btn)return;
+  var act=btn.dataset.act;
+  if(act==='close'){closeSheet();return}
+  if(act==='cat'){
+    var cid=btn.dataset.cat;
+    if(ui.open===cid)ui.open=null;else{ui.open=cid;ui.closed={}}
+    renderList();return;
+  }
+  if(act==='sv'){
+    var k=btn.dataset.key;ui.closed[k]=!ui.closed[k];renderList();return;
+  }
+  if(act==='row'){
+    S={type:'contact',tel:db.papeis.find(function(p){return p.id===btn.dataset.id}).tel,editing:false};
+    openSheet();return;
+  }
+  if(act==='btnAdd'){
+    if(realObra()==='__new'){openSheet();S={type:'obra'};return}
+    S={type:'new'};openSheet();return;
+  }
+  if(act==='tog'){
+    btn.setAttribute('aria-pressed',btn.getAttribute('aria-pressed')==='true'?'false':'true');
+    btn.classList.toggle('on');return;
+  }
+  if(act==='save-new'){
+    var tel=normTel($('#f-tel').value);
+    if(!tel){alert('Digite um número de telefone válido com DDD.');return}
+    var nome=$('#f-nome').value.trim(),emp=$('#f-emp').value.trim();
+    var f=readPapelFields();
+    db.exemplo=false;
+    var c=db.contatos.find(function(x){return x.tel===tel});
+    if(!c){c={tel:tel,nome:nome,empresa:emp};db.contatos.push(c)}
+    else{if(nome)c.nome=nome;if(emp)c.empresa=emp}
+    var oid=ensureObra(f.obra),seen={},list=f.servs.length?f.servs:[SEMCLASS];
+    list.forEach(function(s){
+      var sv=ensureServ(s);if(seen[sv.toLowerCase()])return;seen[sv.toLowerCase()]=1;
+      if(!db.papeis.some(function(p){return p.tel===tel&&p.obra===oid&&p.servico===sv&&p.categoria===f.cat}))
+        db.papeis.push({id:uid(),tel:tel,obra:oid,categoria:f.cat,servico:sv,hist:[]});
+    });
+    commit();closeSheet();return;
+  }
+  if(act==='save-obra'){
+    var n=$('#o-nome').value.trim();if(!n)return;
+    var id=ensureObra(n);db.exemplo=false;
+    closeSheet();ui.obra=id;lsSet(OBRAKEY,id);commit();return;
+  }
+  if(act==='edit-contact'){S.editing=true;refreshSheet();return}
+  if(act==='cancel-edit'){S.editing=false;refreshSheet();return}
+  if(act==='save-edit'){
+    var c=cOf(S.tel);
+    c.nome=$('#e-nome').value.trim();c.empresa=$('#e-emp').value.trim();
+    db.exemplo=false;commit();S.editing=false;refreshSheet();return;
+  }
+  if(act==='del-contact'){
+    if(confirm('Excluir este contato e todos os seus papéis?')){
+      db.papeis=db.papeis.filter(function(p){return p.tel!==S.tel});
+      db.contatos=db.contatos.filter(function(c){return c.tel!==S.tel});
+      commit();closeSheet();
+    }
+    return;
+  }
+  if(act==='del-pp'){
+    db.papeis=db.papeis.filter(function(p){return p.id!==btn.dataset.id});
+    commit();refreshSheet();return;
+  }
+  if(act==='add-papel'){
+    var f=readPapelFields(),oid=ensureObra(f.obra),seen={},list=f.servs.length?f.servs:[SEMCLASS];
+    list.forEach(function(s){
+      var sv=ensureServ(s);if(seen[sv.toLowerCase()])return;seen[sv.toLowerCase()]=1;
+      if(!db.papeis.some(function(p){return p.tel===S.tel&&p.obra===oid&&p.servico===sv&&p.categoria===f.cat}))
+        db.papeis.push({id:uid(),tel:S.tel,obra:oid,categoria:f.cat,servico:sv,hist:[]});
+    });
+    commit();refreshSheet();return;
+  }
+  if(act==='clear-ex'||act==='reset-all'){
+    if(confirm('Tem certeza?')){db=freshDb();commit();closeSheet()}
+    return;
+  }
+  if(act==='export'){
+    var blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='obrafonica-backup.json';a.click();return;
+  }
+  if(act==='import-btn'){$('#importFile').click();return}
+  if(btn.id==='btnSettings'||btn.closest('#btnSettings')){S={type:'settings'};openSheet();return}
+  if(btn.id==='btnTheme'){
+    var dark=document.documentElement.dataset.theme==='dark'||(!document.documentElement.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches);
+    document.documentElement.dataset.theme=dark?'light':'dark';
+    lsSet(THKEY,document.documentElement.dataset.theme);return;
+  }
+});
+
+var th=lsGet(THKEY);if(th)document.documentElement.dataset.theme=th;
+render();
+})();
+</script>
+</body>
+</html>
