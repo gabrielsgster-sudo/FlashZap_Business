@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>:root{color-scheme:light;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
-<title>Obra Fônica</title>
+<title>FlashZap Business</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
 <style>
 /* Layout: cabeçalho com faixa de obra, filtros, e um treemap em 3 níveis (categoria > serviço > contato) que ocupa a tela */
@@ -150,7 +150,7 @@ button,input,select{font:inherit;color:inherit}
 
 <div class="wrap">
   <header class="top">
-    <div class="brand"><h1>Obra Fônica</h1><span class="sub" id="stats"></span></div>
+    <div class="brand"><h1>FlashZap Business</h1><span class="sub" id="stats"></span></div>
     <div class="top-actions">
       <button class="btn sm" id="syncChip" data-s="local"><span class="dot"></span><span id="syncTxt">Só neste aparelho</span></button>
       <button class="btn sm" id="btnSettings">Ajustes</button>
@@ -271,7 +271,7 @@ async function ghPush(retry){
   if(!ghOk())return;
   setSync('saving');
   try{
-    var body={message:'Obra Fônica: atualização de contatos',content:b64enc(JSON.stringify(db,null,1)),branch:gh.branch||'main'};
+    var body={message:'FlashZap Business: atualização de contatos',content:b64enc(JSON.stringify(db,null,1)),branch:gh.branch||'main'};
     if(sha)body.sha=sha;
     var h=hdr();h['Content-Type']='application/json';
     var r=await fetch(ghUrl(),{method:'PUT',headers:h,body:JSON.stringify(body)});
@@ -386,6 +386,10 @@ function renderChrome(){
 function render(){renderChrome();renderList();if(S.type)refreshSheet()}
 
 /* ---------- ações sobre vínculos ---------- */
+function moveNew(id){
+  var n=($('#mv-new')||{value:''}).value.trim();if(!n)return toast('Digite o nome da nova categoria');
+  var cid=ensureCat(n);S.newCatFor=null;movePapel(id,cid);
+}
 function movePapel(id,catId){
   var p=db.papeis.find(function(x){return x.id===id});
   if(!p||p.categoria===catId)return;
@@ -400,6 +404,12 @@ function ensureObra(nome){
   var o=db.obras.find(function(o){return o.nome.toLowerCase()===nome.toLowerCase()});
   if(o)return o.id;o={id:uid(),nome:nome};db.obras.push(o);return o.id;
 }
+function nextHue(){var h=HUES.find(function(x){return !db.categorias.some(function(c){return c.h===x})});return h==null?Math.floor(Math.random()*360):h}
+function ensureCat(nome){
+  nome=(nome||'').trim();if(!nome)return '';
+  var c=db.categorias.find(function(c){return c.nome.toLowerCase()===nome.toLowerCase()});
+  if(c)return c.id;c={id:uid(),nome:nome,h:nextHue()};db.categorias.push(c);return c.id;
+}
 function ensureServ(s){
   s=(s||'').trim();if(!s||s===SEMCLASS)return SEMCLASS;
   var f=db.servicos.find(function(x){return x.toLowerCase()===s.toLowerCase()});
@@ -407,10 +417,11 @@ function ensureServ(s){
 }
 function addPapeis(tel,f){
   var oid=ensureObra(f.obra),seen={},list=f.servs.length?f.servs:[SEMCLASS];
+  var cid=f.catNew?ensureCat(f.catNew):f.cat;
   list.forEach(function(s){
     var sv=ensureServ(s);if(seen[sv.toLowerCase()])return;seen[sv.toLowerCase()]=1;
-    if(!db.papeis.some(function(p){return p.tel===tel&&p.obra===oid&&p.servico===sv&&p.categoria===f.cat}))
-      db.papeis.push({id:uid(),tel:tel,obra:oid,categoria:f.cat,servico:sv,hist:[]});
+    if(!db.papeis.some(function(p){return p.tel===tel&&p.obra===oid&&p.servico===sv&&p.categoria===cid}))
+      db.papeis.push({id:uid(),tel:tel,obra:oid,categoria:cid,servico:sv,hist:[]});
   });
 }
 
@@ -429,7 +440,7 @@ function papelFields(){
   var opts=db.categorias.map(function(c){return '<option value="'+c.id+'">'+esc(c.nome)+'</option>'}).join('');
   var pre=realObra(),oo=db.obras.map(function(o){return '<option value="'+esc(o.id)+'"'+(o.id===pre?' selected':'')+'>'+esc(o.nome)+'</option>'}).join('');
   return '<div class="field"><label for="f-obra">Obra</label><select id="f-obra"><option value="">Sem obra</option>'+oo+'<option value="__new">+ Nova obra…</option></select><input id="f-obra-new" placeholder="Nome da nova obra" autocomplete="off" hidden></div>'
-   +'<div class="field"><label for="f-cat">Categoria</label><select id="f-cat">'+opts+'</select></div>'
+   +'<div class="field"><label for="f-cat">Categoria</label><select id="f-cat">'+opts+'<option value="__newcat">+ Nova categoria…</option></select><input id="f-cat-new" placeholder="Nome da nova categoria" autocomplete="off" hidden></div>'
    +'<div class="field"><label>Classificação (pode marcar mais de uma)</label><div class="chips" id="f-servs">'+db.servicos.map(function(s){return '<button type="button" class="chipbtn" aria-pressed="false" data-act="tog" data-v="'+esc(s)+'">'+esc(s)+'</button>'}).join('')+'</div><input id="f-serv-new" placeholder="Outra classificação (separe por vírgula)" autocomplete="off"></div>';
 }
 function readPapelFields(){
@@ -437,7 +448,8 @@ function readPapelFields(){
   var sel=$('#f-obra').value,obra='';
   if(sel==='__new')obra=$('#f-obra-new').value.trim();
   else if(sel){var ob=db.obras.find(function(x){return x.id===sel});obra=ob?ob.nome:''}
-  return {obra:obra,cat:$('#f-cat').value,servs:servs};
+  var cs=$('#f-cat').value,catNew=cs==='__newcat'?$('#f-cat-new').value.trim():'';
+  return {obra:obra,cat:cs,catNew:catNew,catMissing:cs==='__newcat'&&!catNew,servs:servs};
 }
 function sheetObra(){
   return '<div class="sh-head"><div><h2>Nova obra</h2><p class="mut">Depois é só tocar nela na tela inicial para ver apenas os contatos dessa obra.</p></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>'
@@ -474,6 +486,7 @@ function sheetContact(){
     var cat=catOf(p.categoria),last=(p.hist||[]).slice(-1)[0];
     h+='<li class="pp"><div class="pp-top"><strong>'+esc(p.servico)+'</strong><span class="mut">'+esc(obraName(p.obra))+'</span></div><div class="mv"><small>Categoria</small>'
       +db.categorias.map(function(k){return '<button class="chipbtn'+(k.id===p.categoria?' on':'')+'" data-h data-act="move" data-id="'+p.id+'" data-cat="'+k.id+'" style="--h:'+k.h+'">'+esc(k.nome)+'</button>'}).join('')
+      +(S.newCatFor===p.id?'<span class="confirm" style="flex:1 1 100%"><input id="mv-new" placeholder="Nome da nova categoria" autocomplete="off" style="flex:1;min-width:0;height:36px;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:0 10px;font-size:16px"><button class="btn sm primary" data-act="move-new-ok" data-id="'+p.id+'">Criar e mover</button><button class="btn sm" data-act="move-new-no">Cancelar</button></span>':'<button class="chipbtn" data-act="move-new" data-id="'+p.id+'">+ Nova categoria</button>')
       +'</div><div class="pp-foot"><span>'+(last?'Movido de '+esc(catOf(last.de).nome)+' para '+esc(catOf(last.para).nome)+' em '+fmtDate(last.em):'Em '+esc(cat.nome)+' desde o cadastro')+'</span>'
       +(S.confirm==='p:'+p.id?'<span class="confirm">Remover? <button class="btn sm danger" data-act="rm-papel-yes" data-id="'+p.id+'">Remover</button><button class="btn sm" data-act="rm-no">Não</button></span>':'<button data-act="rm-papel" data-id="'+p.id+'">Remover</button>')
       +'</div></li>';
@@ -578,9 +591,10 @@ sheet.addEventListener('input',function(e){
     else h.hidden=true;
   }
 });
-sheet.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.id==='o-nome'){e.preventDefault();saveObra()}});
+sheet.addEventListener('keydown',function(e){if(e.key!=='Enter')return;if(e.target.id==='o-nome'){e.preventDefault();saveObra()}if(e.target.id==='mv-new'){e.preventDefault();moveNew(S.newCatFor)}});
 sheet.addEventListener('change',function(e){
   if(e.target.id==='f-obra'){var nn=$('#f-obra-new');nn.hidden=e.target.value!=='__new';if(!nn.hidden)nn.focus()}
+  if(e.target.id==='f-cat'){var nc=$('#f-cat-new');nc.hidden=e.target.value!=='__newcat';if(!nc.hidden)nc.focus()}
   var i=e.target.closest&&e.target.closest('input[data-list]');
   if(i)renameItem(i.dataset.list,i.dataset.id,i.value.trim(),i);
   if(e.target.id==='imp'&&e.target.files[0]){
@@ -590,7 +604,7 @@ sheet.addEventListener('change',function(e){
         var d=JSON.parse(rd.result);
         if(!d||!Array.isArray(d.papeis)||!Array.isArray(d.contatos)||!Array.isArray(d.categorias))throw new Error('x');
         S.pendingImport=d;refreshSheet();
-      }catch(err){toast('Arquivo inválido: não parece um backup da Obra Fônica')}
+      }catch(err){toast('Arquivo inválido: não parece um backup do FlashZap Business')}
     };
     rd.readAsText(e.target.files[0]);
   }
@@ -613,6 +627,9 @@ sheet.addEventListener('click',function(e){
   if(a==='close')closeSheet();
   else if(a==='tog')el.setAttribute('aria-pressed',el.getAttribute('aria-pressed')==='true'?'false':'true');
   else if(a==='move'){movePapel(id,el.dataset.cat)}
+  else if(a==='move-new'){S.newCatFor=id;refreshSheet();var mi=$('#mv-new');if(mi)mi.focus()}
+  else if(a==='move-new-no'){S.newCatFor=null;refreshSheet()}
+  else if(a==='move-new-ok')moveNew(id);
   else if(a==='edit'){S.editing=true;refreshSheet()}
   else if(a==='cancel-edit'){S.editing=false;refreshSheet()}
   else if(a==='copytel'){copy(fmtTel(S.tel))}
@@ -628,7 +645,8 @@ sheet.addEventListener('click',function(e){
   else if(a==='save-new')saveNew();
   else if(a==='save-obra')saveObra();
   else if(a==='save-papel'){
-    var f=readPapelFields();addPapeis(S.tel,f);S.adding=false;commit();toast('Adicionado')}
+    var f=readPapelFields();if(f.catMissing)return showErr('#errAdd','Digite o nome da nova categoria.');
+    addPapeis(S.tel,f);S.adding=false;commit();toast('Adicionado')}
   else if(a==='save-edit')saveEdit();
   else if(a==='save-gh')saveGh();
   else if(a==='off-gh'){gh=null;try{localStorage.removeItem(GHKEY)}catch(x){}sha=null;setSync('local');refreshSheet();toast('Sincronia desligada. Os dados continuam neste aparelho.')}
@@ -651,7 +669,7 @@ function copy(t){
 function exportJson(){
   try{
     var blob=new Blob([JSON.stringify(db,null,1)],{type:'application/json'}),a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);a.download='obra-fonica-'+now().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();
+    a.href=URL.createObjectURL(blob);a.download='flashzap-business-'+now().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();
     setTimeout(function(){URL.revokeObjectURL(a.href)},2000);
   }catch(e){toast('Não foi possível baixar aqui. Use “Copiar JSON”.')}
 }
@@ -661,6 +679,7 @@ function saveNew(){
   if(!tel)return showErr('#errNew','Digite um telefone válido, com DDD.');
   var nome=$('#f-nome').value.trim(),emp=$('#f-emp').value.trim(),f=readPapelFields();
   if(!nome&&!db.contatos.some(function(c){return c.tel===tel}))return showErr('#errNew','Digite o nome do contato.');
+  if(f.catMissing)return showErr('#errNew','Digite o nome da nova categoria.');
   if(db.exemplo){dropExamples();toast('Exemplos removidos')}
   var c=db.contatos.find(function(x){return x.tel===tel});
   if(c){if(nome)c.nome=nome;if(emp)c.empresa=emp}else db.contatos.push({tel:tel,nome:nome,empresa:emp});
@@ -689,8 +708,7 @@ function addItem(kind){
   var inp=$('#add-'+kind),v=inp.value.trim();if(!v)return;
   if(kind==='cat'){
     if(db.categorias.some(function(c){return c.nome.toLowerCase()===v.toLowerCase()}))return toast('Essa categoria já existe');
-    var h=HUES.find(function(x){return !db.categorias.some(function(c){return c.h===x})});if(h==null)h=Math.floor(Math.random()*360);
-    db.categorias.push({id:uid(),nome:v,h:h});
+    db.categorias.push({id:uid(),nome:v,h:nextHue()});
   }else if(kind==='serv'){
     if(db.servicos.some(function(s){return s.toLowerCase()===v.toLowerCase()}))return toast('Essa classificação já existe');
     db.servicos.push(v);
