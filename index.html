@@ -47,7 +47,8 @@ button,input,select{font:inherit;color:inherit}
 .brand h1{margin:0;font:700 32px/1 var(--font-d);text-transform:uppercase;letter-spacing:.05em}
 .sub{display:block;margin-top:4px;color:var(--mut);font-size:13px}
 .top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.stripe{height:6px;border-radius:2px;background:repeating-linear-gradient(135deg,var(--ac) 0 9px,var(--stripe-dark) 9px 18px)}
+.stripe{height:2px;border-radius:2px;background:linear-gradient(90deg,var(--ac) 0%,color-mix(in srgb,var(--ac) 35%,transparent) 45%,transparent 100%)}
+.bsub{display:block;margin-top:3px;font:600 13px/1 var(--font-b);letter-spacing:.32em;text-transform:uppercase;color:var(--ac)}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font-weight:500;cursor:pointer;text-decoration:none;white-space:nowrap}
 .btn:hover{border-color:var(--mut)}
@@ -143,6 +144,19 @@ button,input,select{font:inherit;color:inherit}
 .note{font-size:13px;color:var(--mut);margin:6px 0 0}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:80;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;max-width:min(92vw,520px);box-shadow:var(--shadow)}
 @media (prefers-reduced-motion:no-preference){.ac-h svg,.sg-h svg{transition:transform .15s}#movebar [data-cat]{transition:transform .1s}}
+
+body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+#movebar{bottom:calc(76px + env(safe-area-inset-bottom,0px))!important}
+#toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))!important}
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:30;display:block;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -4px 18px rgba(0,0,0,.08);padding-bottom:env(safe-area-inset-bottom,0px)}
+.dock-in{display:flex;width:100%;max-width:640px;margin:0 auto;gap:0;padding:4px 6px}
+.dk{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:52px;border:0;border-radius:12px;background:none;color:var(--mut);font:600 11.5px/1 var(--font-b);cursor:pointer;position:relative}
+.dk svg{width:22px;height:22px}
+.dk[aria-pressed="true"]{color:var(--ink);background:hsl(44 90% 50% / .16)}
+.dk[aria-pressed="true"] svg{color:var(--ac)}
+.dk.err::after{content:"";position:absolute;top:8px;right:calc(50% - 18px);width:8px;height:8px;border-radius:50%;background:var(--danger)}
+.rw-main b .st{color:var(--ac);margin-right:4px}
+@media (prefers-reduced-motion:no-preference){.dk{transition:background .15s,color .15s}}
 </style>
 </head>
 <body>
@@ -150,12 +164,7 @@ button,input,select{font:inherit;color:inherit}
 
 <div class="wrap">
   <header class="top">
-    <div class="brand"><h1>FlashZap Business</h1><span class="sub" id="stats"></span></div>
-    <div class="top-actions">
-      <button class="btn sm" id="syncChip" data-s="local"><span class="dot"></span><span id="syncTxt">Só neste aparelho</span></button>
-      <button class="btn sm" id="btnSettings">Ajustes</button>
-      <button class="btn icon sm" id="btnTheme" aria-label="Alternar tema claro e escuro" title="Alternar tema"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
-    </div>
+    <div class="brand"><h1>FlashZap</h1><span class="bsub">Business</span><span class="sub" id="stats"></span></div>
   </header>
   <div class="stripe"></div>
   <div id="banner" hidden></div>
@@ -170,6 +179,13 @@ button,input,select{font:inherit;color:inherit}
   <div id="movebar" hidden></div>
 </div>
 <div id="overlay" hidden><div id="sheet" role="dialog" aria-modal="true" aria-label="Detalhes"></div></div>
+<span id="syncChip" data-s="local" hidden><span id="syncTxt"></span></span>
+<nav class="dock" aria-label="Navegação"><div class="dock-in">
+  <button class="dk" id="dkHome" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Início</button>
+  <button class="dk" id="dkFav" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>Favoritos</button>
+  <button class="dk" id="btnTheme" aria-label="Alternar tema claro e escuro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>Tema</button>
+  <button class="dk" id="btnSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Ajustes</button>
+</div></nav>
 <div id="toast" role="status" hidden></div>
 
 <script>
@@ -209,7 +225,7 @@ function exampleDb(){
 }
 function loadLocal(){var r=lsGet(KEY);if(r){try{var d=JSON.parse(r);if(d&&d.papeis&&d.categorias)return d}catch(e){}}return null}
 var db=loadLocal()||exampleDb();
-var ui={q:'',obra:lsGet(OBRAKEY)||'',fcat:'',fserv:'',open:null,closed:{}};
+var ui={favs:false,q:'',obra:lsGet(OBRAKEY)||'',fcat:'',fserv:'',open:null,closed:{}};
 function realObra(){return (ui.obra&&ui.obra!=='__none')?ui.obra:''}
 function setObra(v){ui.obra=v;lsSet(OBRAKEY,v);render()}
 var S={type:null};
@@ -239,7 +255,7 @@ function setSync(s,msg){
   syncState=s;syncMsg=msg||'';
   var chip=$('#syncChip');chip.dataset.s=s;
   $('#syncTxt').textContent=s==='local'?'Só neste aparelho':s==='saving'?'Salvando…':s==='synced'?'GitHub em dia':s==='erro'?'Erro na sincronia':'GitHub';
-  chip.title=msg||'';
+  chip.title=msg||'';try{syncDock()}catch(e){}
 }
 function saveLocal(){lsSet(KEY,JSON.stringify(db))}
 function commit(rerender){
@@ -305,6 +321,7 @@ function filtered(){
   var q=ui.q.trim().toLowerCase(),qd=q.replace(/\D/g,'');
   return db.papeis.filter(function(p){
     if(ui.obra){if(ui.obra==='__none'?p.obra!=='':p.obra!==ui.obra)return false}
+    if(ui.favs&&!cOf(p.tel).fav)return false;
     if(ui.fcat&&p.categoria!==ui.fcat)return false;
     if(ui.fserv&&p.servico!==ui.fserv)return false;
     if(q){
@@ -324,7 +341,7 @@ var CHEV='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="cu
 var WAICON='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 20.5l1.7-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>';
 function rowHtml(p){
   var c=cOf(p.tel),nome=c.nome||fmtTel(p.tel),sub=[c.empresa,(p.obra&&!ui.obra)?obraName(p.obra):''].filter(Boolean).join(' · ');
-  return '<li class="rw" draggable="true" data-id="'+p.id+'"><button class="rw-main" data-act="row" data-id="'+p.id+'"><b>'+esc(nome)+'</b>'+(sub?'<span>'+esc(sub)+'</span>':'')+'</button><a class="wa" href="https://wa.me/'+p.tel+'" target="_blank" rel="noopener" aria-label="Abrir conversa de '+esc(nome)+' no WhatsApp">'+WAICON+'WhatsApp</a></li>';
+  return '<li class="rw" draggable="true" data-id="'+p.id+'"><button class="rw-main" data-act="row" data-id="'+p.id+'"><b>'+(c.fav?'<span class="st">★</span>':'')+esc(nome)+'</b>'+(sub?'<span>'+esc(sub)+'</span>':'')+'</button><a class="wa" href="https://wa.me/'+p.tel+'" target="_blank" rel="noopener" aria-label="Abrir conversa de '+esc(nome)+' no WhatsApp">'+WAICON+'WhatsApp</a></li>';
 }
 function catSection(c,items,open,q){
   var h='<section class="ac'+(open?' open':'')+'" style="--h:'+c.h+'"><button class="ac-h" data-act="cat" data-cat="'+c.id+'" aria-expanded="'+open+'"><span class="bar"></span><span class="nm">'+esc(c.nome)+'</span><em>'+items.length+'</em>'+CHEV+'</button>';
@@ -479,7 +496,7 @@ function sheetContact(){
   if(S.editing){
     h+='<div class="field"><label for="e-nome">Nome</label><input id="e-nome" value="'+esc(c.nome)+'"></div><div class="field"><label for="e-emp">Empresa</label><input id="e-emp" value="'+esc(c.empresa)+'"></div><div class="field"><label for="e-tel">Telefone</label><input id="e-tel" type="tel" inputmode="tel" value="'+esc(fmtTel(c.tel))+'"></div><p class="hint" id="errEdit" style="color:var(--danger)" hidden></p><div class="row2"><button class="btn primary" data-act="save-edit">Salvar</button><button class="btn" data-act="cancel-edit">Cancelar</button></div>';
   }else{
-    h+='<p class="telbig">'+esc(fmtTel(c.tel))+'</p><div class="acts"><a class="btn wa" href="https://wa.me/'+c.tel+'" target="_blank" rel="noopener">WhatsApp</a><a class="btn" href="tel:+'+c.tel+'">Ligar</a><button class="btn" data-act="copytel">Copiar</button><button class="btn" data-act="edit">Editar</button></div>';
+    h+='<p class="telbig">'+esc(fmtTel(c.tel))+'</p><div class="acts"><a class="btn wa" href="https://wa.me/'+c.tel+'" target="_blank" rel="noopener">WhatsApp</a><a class="btn" href="tel:+'+c.tel+'">Ligar</a><button class="btn" data-act="fav">'+(c.fav?'★ Favorito':'☆ Favoritar')+'</button><button class="btn" data-act="copytel">Copiar</button><button class="btn" data-act="edit">Editar</button></div>';
   }
   h+='<h3>Serviços e obras</h3><ul class="pps">';
   ps.forEach(function(p){
@@ -509,7 +526,7 @@ function listSection(kind,title,items){
 function sheetSettings(){
   var g=gh||{};
   var h='<div class="sh-head"><div><h2>Ajustes</h2><p class="mut">Listas, sincronia com o GitHub e backup.</p></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>';
-  h+='<h3>GitHub (repositório privado)</h3>'
+  h+='<h3>GitHub (repositório privado)</h3>'+(ghOk()?'<p class="note">Sincronia: '+(syncState==='synced'?'em dia':syncState==='saving'?'salvando…':syncState==='erro'?'erro'+(syncMsg?' — '+esc(syncMsg):''):'conectado')+'</p>':'')
    +'<div class="field"><label for="g-owner">Usuário ou organização</label><input id="g-owner" value="'+esc(g.owner||'')+'" autocomplete="off"></div>'
    +'<div class="field"><label for="g-repo">Repositório</label><input id="g-repo" value="'+esc(g.repo||'')+'" autocomplete="off"></div>'
    +'<div class="field"><label for="g-branch">Branch</label><input id="g-branch" value="'+esc(g.branch||'main')+'" autocomplete="off"></div>'
@@ -562,9 +579,12 @@ $('#fObra').addEventListener('change',function(e){
 });
 $('#fCat').addEventListener('change',function(e){ui.fcat=e.target.value;if(ui.fcat)ui.open=ui.fcat;renderList()});
 $('#fServ').addEventListener('change',function(e){ui.fserv=e.target.value;renderList()});
+
+function syncDock(){$('#dkHome').setAttribute('aria-pressed',String(!ui.favs));$('#dkFav').setAttribute('aria-pressed',String(!!ui.favs));$('#btnSettings').classList.toggle('err',syncState==='erro')}
+$('#dkHome').addEventListener('click',function(){ui.favs=false;render();syncDock();window.scrollTo({top:0,behavior:'smooth'})});
+$('#dkFav').addEventListener('click',function(){ui.favs=!ui.favs;render();syncDock();window.scrollTo({top:0,behavior:'smooth'});if(ui.favs&&!db.contatos.some(function(c){return c.fav}))toast('Nenhum favorito ainda. Abra um contato e toque em Favoritar.')});
 $('#btnAdd').addEventListener('click',function(){S={type:'new'};openSheet()});
 $('#btnSettings').addEventListener('click',function(){S={type:'settings'};openSheet()});
-$('#syncChip').addEventListener('click',function(){S={type:'settings'};openSheet()});
 $('#btnTheme').addEventListener('click',function(){
   var cur=document.documentElement.getAttribute('data-theme');
   var dark=cur?cur==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -633,6 +653,7 @@ sheet.addEventListener('click',function(e){
   else if(a==='edit'){S.editing=true;refreshSheet()}
   else if(a==='cancel-edit'){S.editing=false;refreshSheet()}
   else if(a==='copytel'){copy(fmtTel(S.tel))}
+  else if(a==='fav'){var cc=db.contatos.find(function(x){return x.tel===S.tel});if(cc){if(cc.fav)delete cc.fav;else cc.fav=true;commit()}}
   else if(a==='add-papel'){S.adding=true;refreshSheet()}
   else if(a==='cancel-add'){S.adding=false;refreshSheet()}
   else if(a==='rm-papel'){S.confirm='p:'+id;refreshSheet()}
@@ -746,6 +767,7 @@ applyTheme(lsGet(THKEY));
 setSync(syncState==='idle'?'idle':'local');
 render();
 if(ghOk())startSync();
+syncDock();
 window.__obra={get db(){return db}};
 })();
 </script>
