@@ -663,9 +663,10 @@ sheet.addEventListener('click',function(e){
   else if(a==='import-no'){S.pendingImport=null;refreshSheet()}
 });
 function copy(t){
-  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(function(){toast('Copiado')},function(){toast('Não foi possível copiar neste ambiente')});
-  else toast('Não foi possível copiar neste ambiente');
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(function(){toast('Copiado')},function(){legacyCopy(t)});
+  else legacyCopy(t);
 }
+function legacyCopy(t){try{var x=document.createElement('textarea');x.value=t;x.setAttribute('readonly','');x.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(x);x.select();x.setSelectionRange(0,999);var ok=document.execCommand('copy');x.remove();toast(ok?'Copiado':'Não foi possível copiar neste ambiente')}catch(e){toast('Não foi possível copiar neste ambiente')}}
 function exportJson(){
   try{
     var blob=new Blob([JSON.stringify(db,null,1)],{type:'application/json'}),a=document.createElement('a');
