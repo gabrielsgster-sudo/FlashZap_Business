@@ -370,6 +370,9 @@ async function cloudStart(u){
   try{snap=await ref.get()}catch(e){return (e&&e.code==='permission-denied')?'denied':'network'}
   cloudUser=u;cloudRef=ref;
   var app=window.fzApp;
+  var ow=lsGet('flashzap.owner');
+  if(ow&&ow!==u.uid&&app)app.reset();
+  lsSet('flashzap.owner',u.uid);
   if(app){
     var local=app.getDb();
     if(snap.exists){
@@ -384,12 +387,27 @@ async function cloudStart(u){
 }
 function cloudSchedule(){if(!cloudRef)return;clearTimeout(pushT);pushT=setTimeout(cloudPush,1500)}
 async function cloudPush(){
-  if(!cloudRef||!window.fzApp)return;
-  var d=window.fzApp.getDb();if(d.exemplo)return;
-  try{await cloudRef.set({dados:JSON.stringify(d),atualizadoEm:d.updatedAt||''})}
-  catch(e){window.fzApp.toast('Não salvou na nuvem. Os dados continuam neste aparelho.')}
+  if(!cloudRef||!window.fzApp)return true;
+  var d=window.fzApp.getDb();if(d.exemplo)return true;
+  try{await cloudRef.set({dados:JSON.stringify(d),atualizadoEm:d.updatedAt||''});return true}
+  catch(e){window.fzApp.toast('Não salvou na nuvem. Os dados continuam neste aparelho.');return false}
 }
 window.fzCloud={schedule:cloudSchedule};
+window.fzAuth={
+  email:function(){var s=readSession();return sessionValid(s)?s.email:''},
+  cloud:function(){var s=readSession();return !!(s&&/^google-/.test(s.token))},
+  logout:async function(wipe){
+    if(wipe&&cloudRef){
+      clearTimeout(pushT);
+      var okp=await cloudPush();
+      if(!okp){if(window.fzApp)window.fzApp.toast('Sem conexão: não deu para salvar na nuvem. Tente sair de novo quando a internet voltar.');return false}
+    }
+    if(wipe){['obrafonica.v1','obrafonica.obra','flashzap.owner'].forEach(lsDel)}
+    logout('');
+    if(wipe){try{location.reload()}catch(e){}}
+    return true;
+  }
+};
 async function googleLogin(){
   var b=$('#authGoogle');b.disabled=true;msg('');
   try{
@@ -586,7 +604,7 @@ function adopt(remote,msg){
   ['obras','categorias','servicos','contatos','papeis'].forEach(function(k){if(!Array.isArray(db[k]))db[k]=[]});
   saveLocal();render();toast(msg||'Dados atualizados a partir do GitHub');
 }
-window.fzApp={getDb:function(){return db},adopt:adopt,toast:toast};
+window.fzApp={getDb:function(){return db},adopt:adopt,toast:toast,reset:function(){db=exampleDb();saveLocal();render()}};
 async function startSync(){
   if(!ghOk()){setSync('local');return}
   var r=await ghPull();
@@ -813,6 +831,13 @@ function listSection(kind,title,items){
 function sheetSettings(){
   var g=gh||{};
   var h='<div class="sh-head"><div><h2>Ajustes</h2><p class="mut">Listas, sincronia com o GitHub e backup.</p></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>';
+  var fa=window.fzAuth,em=fa&&fa.email();
+  if(em){
+    var nuvem=fa.cloud();
+    h+='<h3>Conta</h3><p class="note">Conectado como <b>'+esc(em)+'</b>. '+(nuvem?'Seus contatos ficam salvos na nuvem.':'Os contatos ficam neste aparelho.')+'</p>';
+    if(S.confirmLogout)h+='<p class="confirm" style="margin-top:10px">'+(nuvem?'Sair deste aparelho? Seus contatos continuam salvos na nuvem, e este aparelho será limpo.':'Sair da conta? Os contatos continuam neste aparelho.')+' <button class="btn sm danger" data-act="logout-yes">Sair</button><button class="btn sm" data-act="logout-no">Cancelar</button></p>';
+    else h+='<div class="row2" style="margin-top:0"><button class="btn danger" data-act="logout">Sair da conta</button></div>';
+  }
   h+='<h3>GitHub (repositório privado)</h3>'+(ghOk()?'<p class="note">Sincronia: '+(syncState==='synced'?'em dia':syncState==='saving'?'salvando…':syncState==='erro'?'erro'+(syncMsg?' — '+esc(syncMsg):''):'conectado')+'</p>':'')
    +'<div class="field"><label for="g-owner">Usuário ou organização</label><input id="g-owner" value="'+esc(g.owner||'')+'" autocomplete="off"></div>'
    +'<div class="field"><label for="g-repo">Repositório</label><input id="g-repo" value="'+esc(g.repo||'')+'" autocomplete="off"></div>'
@@ -968,6 +993,9 @@ sheet.addEventListener('click',function(e){
   else if(a==='import')$('#imp').click();
   else if(a==='import-yes'){var d=S.pendingImport;['obras','categorias','servicos','contatos','papeis'].forEach(function(k){if(!Array.isArray(d[k]))d[k]=[]});d.exemplo=false;db=d;S.pendingImport=null;commit();toast('Backup importado')}
   else if(a==='import-no'){S.pendingImport=null;refreshSheet()}
+  else if(a==='logout'){S.confirmLogout=true;refreshSheet()}
+  else if(a==='logout-no'){S.confirmLogout=false;refreshSheet()}
+  else if(a==='logout-yes'){S.confirmLogout=false;var wipe=window.fzAuth.cloud();window.fzAuth.logout(wipe).then(function(done){if(done)closeSheet();else refreshSheet()})}
 });
 function copy(t){
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(function(){toast('Copiado')},function(){legacyCopy(t)});
