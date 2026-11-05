@@ -830,7 +830,7 @@ function listSection(kind,title,items){
 }
 function sheetSettings(){
   var g=gh||{};
-  var h='<div class="sh-head"><div><h2>Ajustes</h2><p class="mut">Listas, sincronia com o GitHub e backup.</p></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>';
+  var h='<div class="sh-head"><div><h2>Ajustes</h2><p class="mut">Conta, listas e backup.</p></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>';
   var fa=window.fzAuth,em=fa&&fa.email();
   if(em){
     var nuvem=fa.cloud();
@@ -838,7 +838,7 @@ function sheetSettings(){
     if(S.confirmLogout)h+='<p class="confirm" style="margin-top:10px">'+(nuvem?'Sair deste aparelho? Seus contatos continuam salvos na nuvem, e este aparelho será limpo.':'Sair da conta? Os contatos continuam neste aparelho.')+' <button class="btn sm danger" data-act="logout-yes">Sair</button><button class="btn sm" data-act="logout-no">Cancelar</button></p>';
     else h+='<div class="row2" style="margin-top:0"><button class="btn danger" data-act="logout">Sair da conta</button></div>';
   }
-  h+='<h3>GitHub (repositório privado)</h3>'+(ghOk()?'<p class="note">Sincronia: '+(syncState==='synced'?'em dia':syncState==='saving'?'salvando…':syncState==='erro'?'erro'+(syncMsg?' — '+esc(syncMsg):''):'conectado')+'</p>':'')
+  if(!em)h+='<h3>GitHub (repositório privado)</h3>'+(ghOk()?'<p class="note">Sincronia: '+(syncState==='synced'?'em dia':syncState==='saving'?'salvando…':syncState==='erro'?'erro'+(syncMsg?' — '+esc(syncMsg):''):'conectado')+'</p>':'')
    +'<div class="field"><label for="g-owner">Usuário ou organização</label><input id="g-owner" value="'+esc(g.owner||'')+'" autocomplete="off"></div>'
    +'<div class="field"><label for="g-repo">Repositório</label><input id="g-repo" value="'+esc(g.repo||'')+'" autocomplete="off"></div>'
    +'<div class="field"><label for="g-branch">Branch</label><input id="g-branch" value="'+esc(g.branch||'main')+'" autocomplete="off"></div>'
