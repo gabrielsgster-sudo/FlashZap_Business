@@ -822,7 +822,7 @@ function sheetContact(){
   det.forEach(function(p){
     var cat=catOf(p.categoria),last=(p.hist||[]).slice(-1)[0];
     h+='<li class="pp"><div class="pp-top"><strong>'+esc(p.servico)+'</strong><span class="mut">'+esc(obraName(p.obra))+'</span>'+(S.editServ===p.id?'':'<button class="btn sm" data-act="serv-edit" data-id="'+p.id+'" style="margin-left:auto">Alterar</button>')+'</div>'
-      +(S.editServ===p.id?'<div class="mv"><small>Classificação</small>'+db.servicos.map(function(v){return '<button class="chipbtn'+(v===p.servico?' on':'')+'" data-act="serv-set" data-id="'+p.id+'" data-v="'+esc(v)+'">'+esc(v)+'</button>'}).join('')+(S.newServFor===p.id?'<span class="confirm" style="flex:1 1 100%"><input id="sv-new" placeholder="Nome da nova classificação" autocomplete="off" style="flex:1;min-width:0;height:36px;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:0 10px;font-size:16px"><button class="btn sm primary" data-act="serv-new-ok" data-id="'+p.id+'">Criar e usar</button><button class="btn sm" data-act="serv-new-no">Cancelar</button></span>':'<button class="chipbtn novo" data-act="serv-new" data-id="'+p.id+'">+ Nova classificação</button>')+'<button class="chipbtn" data-act="serv-no">Cancelar</button></div>':'')
+      +(S.editServ===p.id?'<div class="mv"><small>Classificação</small>'+db.servicos.map(function(v){return '<button class="chipbtn'+(v===p.servico?' on':'')+'" data-act="serv-set" data-id="'+p.id+'" data-v="'+esc(v)+'">'+esc(v)+'</button>'}).join('')+(S.newServFor===p.id?'<span class="confirm" style="flex:1 1 100%"><input id="sv-new" placeholder="Nome da nova classificação" autocomplete="off" style="flex:1;min-width:0;height:36px;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:0 10px;font-size:16px"><button class="btn sm primary" data-act="serv-new-ok" data-id="'+p.id+'">Criar e usar</button><button class="btn sm" data-act="serv-new-no">Cancelar</button></span>':'<button class="chipbtn novo" data-act="serv-new" data-id="'+p.id+'">+ Nova classificação</button>')+'</div>':'')
       +'<div class="mv"><small>Categoria</small>'
       +db.categorias.map(function(k){return '<button class="chipbtn'+(k.id===p.categoria?' on':'')+'" data-h data-act="move" data-id="'+p.id+'" data-cat="'+k.id+'" style="--h:'+k.h+'">'+esc(k.nome)+'</button>'}).join('')
       +(S.newCatFor===p.id?'<span class="confirm" style="flex:1 1 100%"><input id="mv-new" placeholder="Nome da nova categoria" autocomplete="off" style="flex:1;min-width:0;height:36px;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:0 10px;font-size:16px"><button class="btn sm primary" data-act="move-new-ok" data-id="'+p.id+'">Criar e mover</button><button class="btn sm" data-act="move-new-no">Cancelar</button></span>':'<button class="chipbtn novo" data-act="move-new" data-id="'+p.id+'">+ Nova categoria</button>')
@@ -1098,26 +1098,4 @@ function removeObra(id,mode){
     var seen={};db.papeis=db.papeis.filter(function(p){var k=[p.tel,p.obra,p.servico,p.categoria].join('|');if(seen[k])return false;seen[k]=1;return true});
   }
   db.obras=db.obras.filter(function(o){return o.id!==id});
-  if(ui.obra===id){ui.obra='';lsSet(OBRAKEY,'')}
-  S.confirmObra=null;commit();toast('Obra excluída');
-}
-function delItem(kind,id){
-  if(kind==='obra'&&usage('obra',id)){S.confirmObra=id;refreshSheet();var cp=sheet.querySelector('.pp[style*="danger"]');if(cp)cp.scrollIntoView({block:'center'});return}
-  if(usage(kind,id)){S.confirmList={kind:kind,id:id};refreshSheet();var rs=sheet.querySelector('#rep-sel');if(rs)rs.scrollIntoView({block:'center'});else{var cp2=sheet.querySelector('.pp[style*="danger"]');if(cp2)cp2.scrollIntoView({block:'center'})}return}
-  if(kind==='cat')db.categorias=db.categorias.filter(function(c){return c.id!==id});
-  else if(kind==='serv')db.servicos=db.servicos.filter(function(s){return s!==id});
-  else db.obras=db.obras.filter(function(o){return o.id!==id});
-  commit();
-}
-
-/* ---------- início ---------- */
-applyTheme(lsGet(THKEY));
-setSync(syncState==='idle'?'idle':'local');
-render();
-if(ghOk())startSync();
-syncDock();
-window.__obra={get db(){return db}};
-})();
-</script>
-
-</body></html>
+  if(ui.obra===id){ui.obra='';ls
