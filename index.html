@@ -190,6 +190,9 @@ body:not(.auth-lock) #auth{display:none}
 .auth-msg.info{border-color:var(--line);color:var(--ink)}
 .auth-demo{margin:14px 0 0;padding:10px 12px;border:1px dashed var(--mut);border-radius:6px;font-size:13px;text-align:center;color:var(--mut)}
 .auth-demo b{color:var(--ink);letter-spacing:.2em}
+.auth-or{display:flex;align-items:center;gap:10px;margin:18px 0 0;color:var(--mut);font-size:13px}
+.auth-or::before,.auth-or::after{content:"";flex:1;height:1px;background:var(--line)}
+.gbtn{margin-top:12px}
 </style>
 <section id="auth" aria-label="Acesso ao FlashZap Business">
   <div class="auth-card">
@@ -201,6 +204,8 @@ body:not(.auth-lock) #auth{display:none}
         <div class="field"><label for="authEmail">E-mail da compra</label><input id="authEmail" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="voce@email.com"></div>
         <button class="btn primary auth-btn" id="authSend" type="submit">Enviar código</button>
       </form>
+      <div class="auth-or"><span>ou</span></div>
+      <button class="btn auth-btn gbtn" id="authGoogle" type="button">Entrar com o Google (teste)</button>
     </div>
     <div id="authStep2" hidden>
       <h2>Digite o código</h2>
@@ -238,7 +243,8 @@ var REASON={
   too_many:'Muitas tentativas. Peça um novo código.',
   other_device:'Sua conta foi acessada em outro aparelho. Entre novamente para continuar aqui.',
   session_expired:'Seu acesso expirou depois de 7 dias sem uso. Entre novamente com um novo código.',
-  network:'Sem conexão. Verifique a internet e tente de novo.'
+  network:'Sem conexão. Verifique a internet e tente de novo.',
+  no_access:'Este e-mail não tem acesso de teste.'
 };
 var device=lsGet(DKEY);if(!device){device=rnd(12);lsSet(DKEY,device)}
 function readSession(){var r=lsGet(SKEY);if(!r)return null;try{var s=JSON.parse(r);return (s&&s.email&&s.token&&s.lastSeen)?s:null}catch(e){return null}}
@@ -308,7 +314,7 @@ async function verify(){
   msg(REASON[(r&&r.reason)]||REASON.network);
 }
 function logout(reasonKeyOrText){
-  var prev=readSession();lsDel(SKEY);stopWatch();lock();show(1);
+  var prev=readSession();lsDel(SKEY);stopWatch();cloudOut();lock();show(1);
   if(prev&&prev.email)$('#authEmail').value=prev.email;
   $('#authDemo').hidden=true;
   msg(REASON[reasonKeyOrText]||reasonKeyOrText||'',false);
@@ -331,14 +337,91 @@ function stopWatch(){if(watchId){clearInterval(watchId);watchId=null}}
 document.addEventListener('visibilitychange',function(){if(!document.hidden&&readSession())check()});
 window.flashzapLogout=function(){logout('')};
 
+
+/* ---------- Nuvem (Firebase): entrada pelo Google e contatos no Firestore ---------- */
+var FB={apiKey:"AIzaSyDlIoLdle1LntcPQ22-uLL1qw6lfkZWicE",authDomain:"flashzap-business.firebaseapp.com",projectId:"flashzap-business",storageBucket:"flashzap-business.firebasestorage.app",messagingSenderId:"202218118226",appId:"1:202218118226:web:e27bd301639eaf36d6538b"};
+var SDK='https://www.gstatic.com/firebasejs/10.14.1/';
+var fbReady=null,fbAuth=null,fbDb=null,cloudUser=null,cloudRef=null,pushT=null;
+function loadScript(src){return new Promise(function(res,rej){var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=function(){rej(new Error('load'))};document.head.appendChild(s)})}
+function fbInit(){
+  if(fbReady)return fbReady;
+  fbReady=(async function(){
+    if(!window.firebase){
+      await loadScript(SDK+'firebase-app-compat.js');
+      await Promise.all([loadScript(SDK+'firebase-auth-compat.js'),loadScript(SDK+'firebase-firestore-compat.js')]);
+    }
+    if(!window.firebase.apps.length)window.firebase.initializeApp(FB);
+    fbAuth=window.firebase.auth();fbDb=window.firebase.firestore();
+  })();
+  fbReady.catch(function(){fbReady=null});
+  return fbReady;
+}
+function cloudOut(){clearTimeout(pushT);cloudRef=null;cloudUser=null;try{if(fbAuth)fbAuth.signOut()}catch(e){}}
+function gMsg(e){
+  var c=(e&&e.code)||'';
+  if(c==='auth/popup-closed-by-user'||c==='auth/cancelled-popup-request')return 'Entrada cancelada.';
+  if(c==='auth/popup-blocked')return 'O navegador bloqueou a janela do Google. Libere os pop-ups e tente de novo.';
+  if(c==='auth/unauthorized-domain')return 'Este endereço ainda não está autorizado no Firebase.';
+  if(c==='auth/network-request-failed'||(e&&e.message==='load'))return REASON.network;
+  return 'Não foi possível entrar com o Google.';
+}
+async function cloudStart(u){
+  var ref=fbDb.collection('clientes').doc(u.uid),snap;
+  try{snap=await ref.get()}catch(e){return (e&&e.code==='permission-denied')?'denied':'network'}
+  cloudUser=u;cloudRef=ref;
+  var app=window.fzApp;
+  if(app){
+    var local=app.getDb();
+    if(snap.exists){
+      var remote=null;try{remote=JSON.parse(snap.data().dados)}catch(e){}
+      if(remote){
+        if(local.exemplo||(remote.updatedAt||'')>(local.updatedAt||''))app.adopt(remote,'Contatos carregados da nuvem');
+        else if((remote.updatedAt||'')<(local.updatedAt||''))cloudPush();
+      }
+    }else if(!local.exemplo){cloudPush()}
+  }
+  return 'ok';
+}
+function cloudSchedule(){if(!cloudRef)return;clearTimeout(pushT);pushT=setTimeout(cloudPush,1500)}
+async function cloudPush(){
+  if(!cloudRef||!window.fzApp)return;
+  var d=window.fzApp.getDb();if(d.exemplo)return;
+  try{await cloudRef.set({dados:JSON.stringify(d),atualizadoEm:d.updatedAt||''})}
+  catch(e){window.fzApp.toast('Não salvou na nuvem. Os dados continuam neste aparelho.')}
+}
+window.fzCloud={schedule:cloudSchedule};
+async function googleLogin(){
+  var b=$('#authGoogle');b.disabled=true;msg('');
+  try{
+    await fbInit();
+    var p=new window.firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});
+    var r=await fbAuth.signInWithPopup(p),u=r.user;
+    var st=await cloudStart(u);
+    if(st==='denied'){try{await fbAuth.signOut()}catch(e){}msg(REASON.no_access);b.disabled=false;return}
+    if(st==='network'){msg(REASON.network);b.disabled=false;return}
+    lsSet(SKEY,JSON.stringify({email:u.email,token:'google-'+u.uid,lastSeen:Date.now()}));
+    msg('');unlock();startWatch();
+  }catch(e){msg(gMsg(e))}
+  b.disabled=false;
+}
+async function restoreCloud(){
+  try{await fbInit()}catch(e){return}
+  var un=fbAuth.onAuthStateChanged(function(u){
+    un();
+    if(!u){logout('session_expired');return}
+    cloudStart(u).then(function(r){if(r==='denied')logout('no_access')});
+  });
+}
+
 var s0=readSession(),authed=sessionValid(s0);
 if(!authed)lock();
 document.addEventListener('DOMContentLoaded',function(){
   var lg=document.querySelector('.top .logo');
   $('#authLogo').innerHTML=lg?lg.outerHTML:'<h1>FlashZap Business</h1>';
   if(s0&&s0.email)$('#authEmail').value=s0.email;
-  if(authed)startWatch();
+  if(authed){startWatch();if(s0&&/^google-/.test(s0.token))restoreCloud()}
   else if(s0)msg(REASON.session_expired,true);
+  $('#authGoogle').addEventListener('click',googleLogin);
   $('#authForm1').addEventListener('submit',function(e){
     e.preventDefault();
     var v=$('#authEmail').value.trim().toLowerCase();
@@ -456,6 +539,7 @@ function sortLists(){
 }
 function commit(rerender){
   sortLists();db.updatedAt=now();saveLocal();
+  if(window.fzCloud)window.fzCloud.schedule();
   if(ghOk()){clearTimeout(pushTimer);pushTimer=setTimeout(function(){ghPush(true)},1500);setSync('saving')}
   if(rerender!==false)render();
 }
@@ -497,11 +581,12 @@ async function ghPush(retry){
     var j=await r.json();sha=j.content.sha;setSync('synced');
   }catch(e){setSync('erro',netMsg(e))}
 }
-function adopt(remote){
+function adopt(remote,msg){
   remote.exemplo=false;db=remote;
   ['obras','categorias','servicos','contatos','papeis'].forEach(function(k){if(!Array.isArray(db[k]))db[k]=[]});
-  saveLocal();render();toast('Dados atualizados a partir do GitHub');
+  saveLocal();render();toast(msg||'Dados atualizados a partir do GitHub');
 }
+window.fzApp={getDb:function(){return db},adopt:adopt,toast:toast};
 async function startSync(){
   if(!ghOk()){setSync('local');return}
   var r=await ghPull();
