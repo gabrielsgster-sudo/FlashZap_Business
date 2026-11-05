@@ -131,6 +131,8 @@ button,input,select{font:inherit;color:inherit}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chipbtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer}
 .chipbtn[aria-pressed="true"],.chipbtn.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chipbtn.novo{border:2px dashed var(--ac);background:transparent;font-weight:700;color:var(--ink)}
+.chipbtn.novo::first-letter{color:var(--ac);font-size:1.2em}
 .chipbtn[data-h]{border-left:6px solid hsl(var(--h) 60% 55%)}
 .hint{margin:8px 0 0;font-size:13px;color:var(--ok)}
 .pps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
@@ -713,6 +715,10 @@ function movePapel(id,catId){
   else{p.hist=(p.hist||[]).concat([entry]);p.categoria=catId}
   ui.open=catId;commit();toast(nome+' → '+catOf(catId).nome);
 }
+function servNew(id){
+  var n=($('#sv-new')||{value:''}).value.trim();if(!n)return toast('Digite o nome da nova classificação');
+  var v=ensureServ(n);S.editServ=null;S.newServFor=null;setServico(id,v);
+}
 function setServico(id,sv){
   var p=db.papeis.find(function(x){return x.id===id});
   if(!p||p.servico===sv){refreshSheet();return}
@@ -816,10 +822,10 @@ function sheetContact(){
   det.forEach(function(p){
     var cat=catOf(p.categoria),last=(p.hist||[]).slice(-1)[0];
     h+='<li class="pp"><div class="pp-top"><strong>'+esc(p.servico)+'</strong><span class="mut">'+esc(obraName(p.obra))+'</span>'+(S.editServ===p.id?'':'<button class="btn sm" data-act="serv-edit" data-id="'+p.id+'" style="margin-left:auto">Alterar</button>')+'</div>'
-      +(S.editServ===p.id?'<div class="mv"><small>Classificação</small>'+db.servicos.map(function(v){return '<button class="chipbtn'+(v===p.servico?' on':'')+'" data-act="serv-set" data-id="'+p.id+'" data-v="'+esc(v)+'">'+esc(v)+'</button>'}).join('')+'<button class="chipbtn" data-act="serv-no">Cancelar</button></div>':'')
+      +(S.editServ===p.id?'<div class="mv"><small>Classificação</small>'+db.servicos.map(function(v){return '<button class="chipbtn'+(v===p.servico?' on':'')+'" data-act="serv-set" data-id="'+p.id+'" data-v="'+esc(v)+'">'+esc(v)+'</button>'}).join('')+(S.newServFor===p.id?'<span class="confirm" style="flex:1 1 100%"><input id="sv-new" placeholder="Nome da nova classificação" autocomplete="off" style="flex:1;min-width:0;height:36px;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:0 10px;font-size:16px"><button class="btn sm primary" data-act="serv-new-ok" data-id="'+p.id+'">Criar e usar</button><button class="btn sm" data-act="serv-new-no">Cancelar</button></span>':'<button class="chipbtn novo" data-act="serv-new" data-id="'+p.id+'">+ Nova classificação</button>')+'<button class="chipbtn" data-act="serv-no">Cancelar</button></div>':'')
       +'<div class="mv"><small>Categoria</small>'
       +db.categorias.map(function(k){return '<button class="chipbtn'+(k.id===p.categoria?' on':'')+'" data-h data-act="move" data-id="'+p.id+'" data-cat="'+k.id+'" style="--h:'+k.h+'">'+esc(k.nome)+'</button>'}).join('')
-      +(S.newCatFor===p.id?'<span class="confirm" style="flex:1 1 100%"><input id="mv-new" placeholder="Nome da nova categoria" autocomplete="off" style="flex:1;min-width:0;height:36px;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:0 10px;font-size:16px"><button class="btn sm primary" data-act="move-new-ok" data-id="'+p.id+'">Criar e mover</button><button class="btn sm" data-act="move-new-no">Cancelar</button></span>':'<button class="chipbtn" data-act="move-new" data-id="'+p.id+'">+ Nova categoria</button>')
+      +(S.newCatFor===p.id?'<span class="confirm" style="flex:1 1 100%"><input id="mv-new" placeholder="Nome da nova categoria" autocomplete="off" style="flex:1;min-width:0;height:36px;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:0 10px;font-size:16px"><button class="btn sm primary" data-act="move-new-ok" data-id="'+p.id+'">Criar e mover</button><button class="btn sm" data-act="move-new-no">Cancelar</button></span>':'<button class="chipbtn novo" data-act="move-new" data-id="'+p.id+'">+ Nova categoria</button>')
       +'</div><div class="pp-foot"><span>'+(last?'Movido de '+esc(catOf(last.de).nome)+' para '+esc(catOf(last.para).nome)+' em '+fmtDate(last.em):'Em '+esc(cat.nome)+' desde o cadastro')+'</span>'
       +(S.confirm==='p:'+p.id?'<span class="confirm">Remover? <button class="btn sm danger" data-act="rm-papel-yes" data-id="'+p.id+'">Remover</button><button class="btn sm" data-act="rm-no">Não</button></span>':'<button data-act="rm-papel" data-id="'+p.id+'">Remover</button>')
       +'</div></li>';
@@ -934,7 +940,7 @@ sheet.addEventListener('input',function(e){
     else h.hidden=true;
   }
 });
-sheet.addEventListener('keydown',function(e){if(e.key!=='Enter')return;if(e.target.id==='o-nome'){e.preventDefault();saveObra()}if(e.target.id==='mv-new'){e.preventDefault();moveNew(S.newCatFor)}});
+sheet.addEventListener('keydown',function(e){if(e.key!=='Enter')return;if(e.target.id==='o-nome'){e.preventDefault();saveObra()}if(e.target.id==='mv-new'){e.preventDefault();moveNew(S.newCatFor)}if(e.target.id==='sv-new'){e.preventDefault();servNew(S.newServFor)}});
 sheet.addEventListener('input',function(e){if(e.target.id==='f-cat-new'&&e.target.value.trim())Array.prototype.forEach.call(sheet.querySelectorAll('#f-cats .chipbtn'),function(b){b.setAttribute('aria-pressed','false')})});
 sheet.addEventListener('change',function(e){
   if(e.target.id==='f-obra'){var nn=$('#f-obra-new');nn.hidden=e.target.value!=='__new';if(!nn.hidden)nn.focus()}
@@ -972,8 +978,11 @@ sheet.addEventListener('click',function(e){
   else if(a==='tog')el.setAttribute('aria-pressed',el.getAttribute('aria-pressed')==='true'?'false':'true');
   else if(a==='move'){movePapel(id,el.dataset.cat)}
   else if(a==='serv-edit'){S.editServ=id;refreshSheet()}
-  else if(a==='serv-no'){S.editServ=null;refreshSheet()}
-  else if(a==='serv-set'){S.editServ=null;setServico(id,el.dataset.v)}
+  else if(a==='serv-no'){S.editServ=null;S.newServFor=null;refreshSheet()}
+  else if(a==='serv-new'){S.newServFor=id;refreshSheet();var si=$('#sv-new');if(si)si.focus()}
+  else if(a==='serv-new-no'){S.newServFor=null;refreshSheet()}
+  else if(a==='serv-new-ok')servNew(id);
+  else if(a==='serv-set'){S.editServ=null;S.newServFor=null;setServico(id,el.dataset.v)}
   else if(a==='move-new'){S.newCatFor=id;refreshSheet();var mi=$('#mv-new');if(mi)mi.focus()}
   else if(a==='move-new-no'){S.newCatFor=null;refreshSheet()}
   else if(a==='move-new-ok')moveNew(id);
@@ -1088,27 +1097,4 @@ function removeObra(id,mode){
     db.papeis.forEach(function(p){if(p.obra===id)p.obra=''});
     var seen={};db.papeis=db.papeis.filter(function(p){var k=[p.tel,p.obra,p.servico,p.categoria].join('|');if(seen[k])return false;seen[k]=1;return true});
   }
-  db.obras=db.obras.filter(function(o){return o.id!==id});
-  if(ui.obra===id){ui.obra='';lsSet(OBRAKEY,'')}
-  S.confirmObra=null;commit();toast('Obra excluída');
-}
-function delItem(kind,id){
-  if(kind==='obra'&&usage('obra',id)){S.confirmObra=id;refreshSheet();var cp=sheet.querySelector('.pp[style*="danger"]');if(cp)cp.scrollIntoView({block:'center'});return}
-  if(usage(kind,id)){S.confirmList={kind:kind,id:id};refreshSheet();var rs=sheet.querySelector('#rep-sel');if(rs)rs.scrollIntoView({block:'center'});else{var cp2=sheet.querySelector('.pp[style*="danger"]');if(cp2)cp2.scrollIntoView({block:'center'})}return}
-  if(kind==='cat')db.categorias=db.categorias.filter(function(c){return c.id!==id});
-  else if(kind==='serv')db.servicos=db.servicos.filter(function(s){return s!==id});
-  else db.obras=db.obras.filter(function(o){return o.id!==id});
-  commit();
-}
-
-/* ---------- início ---------- */
-applyTheme(lsGet(THKEY));
-setSync(syncState==='idle'?'idle':'local');
-render();
-if(ghOk())startSync();
-syncDock();
-window.__obra={get db(){return db}};
-})();
-</script>
-
-</body></html>
+  db.obras=db.obras.filter(func
