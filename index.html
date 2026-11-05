@@ -803,8 +803,17 @@ function sheetContact(){
   }else{
     h+='<div class="telrow"><p class="telbig">'+esc(fmtTel(c.tel))+'</p><button class="btn sm" data-act="copytel">Copiar número</button></div><div class="acts"><a class="btn wa" href="https://wa.me/'+c.tel+'" target="_blank" rel="noopener">WhatsApp</a><a class="btn" href="tel:+'+c.tel+'">Ligar</a><button class="btn" data-act="fav">'+(c.fav?'★ Favorito':'☆ Favoritar')+'</button><button class="btn" data-act="edit">Editar</button></div>';
   }
+  var det=ps,outras=[];
+  if(ui.obra){
+    det=ps.filter(function(p){return ui.obra==='__none'?!p.obra:p.obra===ui.obra});
+    if(!det.length)det=ps;
+    else{
+      var seen={};
+      ps.forEach(function(p){if(det.indexOf(p)<0){var n=obraName(p.obra);if(!seen[n]){seen[n]=1;outras.push(n)}}});
+    }
+  }
   h+='<h3>Serviços e obras</h3><ul class="pps">';
-  ps.forEach(function(p){
+  det.forEach(function(p){
     var cat=catOf(p.categoria),last=(p.hist||[]).slice(-1)[0];
     h+='<li class="pp"><div class="pp-top"><strong>'+esc(p.servico)+'</strong><span class="mut">'+esc(obraName(p.obra))+'</span>'+(S.editServ===p.id?'':'<button class="btn sm" data-act="serv-edit" data-id="'+p.id+'" style="margin-left:auto">Alterar</button>')+'</div>'
       +(S.editServ===p.id?'<div class="mv"><small>Classificação</small>'+db.servicos.map(function(v){return '<button class="chipbtn'+(v===p.servico?' on':'')+'" data-act="serv-set" data-id="'+p.id+'" data-v="'+esc(v)+'">'+esc(v)+'</button>'}).join('')+'<button class="chipbtn" data-act="serv-no">Cancelar</button></div>':'')
@@ -816,6 +825,7 @@ function sheetContact(){
       +'</div></li>';
   });
   h+='</ul>';
+  if(outras.length)h+='<p class="note" style="margin-top:10px">Contato em obras: <b>'+[obraName(ui.obra==='__none'?'':ui.obra)].concat(outras).map(esc).join(', ')+'</b></p>';
   if(S.adding){
     h+='<h3>Adicionar serviço ou obra</h3>'+papelFields()+'<p class="hint" id="errAdd" style="color:var(--danger)" hidden></p><div class="row2"><button class="btn primary" data-act="save-papel">Adicionar</button><button class="btn" data-act="cancel-add">Cancelar</button></div>';
   }else h+='<div class="row2"><button class="btn" data-act="add-papel">+ Adicionar serviço ou obra</button></div>';
