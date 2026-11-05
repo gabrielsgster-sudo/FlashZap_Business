@@ -1,9 +1,17 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<style>:root{color-scheme:light;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<style>:root{color-scheme:light;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}
+body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+#toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))!important}
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:30;display:block;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -4px 18px rgba(0,0,0,.08);padding-bottom:env(safe-area-inset-bottom,0px)}
+.dock-in{display:flex;width:100%;max-width:640px;margin:0 auto;gap:0;padding:4px 6px}
+.dk{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:52px;border:0;border-radius:12px;background:none;color:var(--mut);font:600 11.5px/1 var(--font-b);cursor:pointer;position:relative}
+.dk svg{width:22px;height:22px}
+.dk[aria-pressed="true"]{color:var(--ink);background:hsl(44 90% 50% / .16)}
+.dk[aria-pressed="true"] svg{color:var(--ac)}
+.dk.err::after{content:"";position:absolute;top:8px;right:calc(50% - 18px);width:8px;height:8px;border-radius:50%;background:var(--danger)}
+.rw-main b .st{color:var(--ac);margin-right:4px}
+@media (prefers-reduced-motion:no-preference){.dk{transition:background .15s,color .15s}}
+</style>
 <title>FlashZap Business</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
 <style>
@@ -92,7 +100,6 @@ button,input,select{font:inherit;color:inherit}
 .sg-h small{font:600 12px var(--font-b);opacity:.7}
 .rows{display:flex;flex-direction:column;gap:4px;margin:0;padding:0;list-style:none}
 .rw{display:flex;align-items:stretch;gap:6px;min-height:58px;border-radius:6px;background:hsl(var(--h) var(--ts) var(--tl))}
-.rw[draggable="true"]{cursor:grab}
 .rw-main{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:8px 4px 8px 12px;border:0;background:none;color:inherit;text-align:left;cursor:pointer}
 .rw-main b{font-weight:600;font-size:15.5px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rw-main span{font-size:12.5px;opacity:.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -101,10 +108,6 @@ button,input,select{font:inherit;color:inherit}
 .empty{margin:8px 8px 4px;font-size:14px;opacity:.8}
 .empty-all{margin:14px 4px;text-align:center;color:var(--mut)}
 
-#movebar{position:fixed;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:40;max-width:900px;margin:0 auto;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px;border-radius:8px;background:var(--ink);color:var(--bg);box-shadow:var(--shadow)}
-#movebar b{font:600 13px var(--font-d);text-transform:uppercase;letter-spacing:.06em;margin-right:4px}
-#movebar [data-cat]{padding:6px 12px;border-radius:5px;border:2px solid transparent;background:hsl(var(--h) 45% 82%);color:#141A22;font-weight:600;font-size:13px}
-#movebar [data-cat].over{border-color:var(--ac);transform:scale(1.04)}
 
 #overlay{position:fixed;inset:0;z-index:50;background:rgba(10,14,19,.58);display:flex;align-items:flex-end;justify-content:center}
 #sheet{width:100%;max-width:580px;max-height:92dvh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px 14px 0 0;box-shadow:var(--shadow);padding:18px max(18px,env(safe-area-inset-left,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px))}
@@ -146,20 +149,7 @@ button,input,select{font:inherit;color:inherit}
 .li .n{width:24px;text-align:right;font-size:12px}
 .note{font-size:13px;color:var(--mut);margin:6px 0 0}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:80;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;max-width:min(92vw,520px);box-shadow:var(--shadow)}
-@media (prefers-reduced-motion:no-preference){.ac-h svg,.sg-h svg{transition:transform .15s}#movebar [data-cat]{transition:transform .1s}}
-
-body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
-#movebar{bottom:calc(76px + env(safe-area-inset-bottom,0px))!important}
-#toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))!important}
-.dock{position:fixed;left:0;right:0;bottom:0;z-index:30;display:block;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -4px 18px rgba(0,0,0,.08);padding-bottom:env(safe-area-inset-bottom,0px)}
-.dock-in{display:flex;width:100%;max-width:640px;margin:0 auto;gap:0;padding:4px 6px}
-.dk{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:52px;border:0;border-radius:12px;background:none;color:var(--mut);font:600 11.5px/1 var(--font-b);cursor:pointer;position:relative}
-.dk svg{width:22px;height:22px}
-.dk[aria-pressed="true"]{color:var(--ink);background:hsl(44 90% 50% / .16)}
-.dk[aria-pressed="true"] svg{color:var(--ac)}
-.dk.err::after{content:"";position:absolute;top:8px;right:calc(50% - 18px);width:8px;height:8px;border-radius:50%;background:var(--danger)}
-.rw-main b .st{color:var(--ac);margin-right:4px}
-@media (prefers-reduced-motion:no-preference){.dk{transition:background .15s,color .15s}}
+@media (prefers-reduced-motion:no-preference){.ac-h svg,.sg-h svg{transition:transform .15s}}
 
 .btn{min-height:44px}.btn.sm{min-height:44px}
 .tools input,.tools select,.field input,.field select,.li input{height:44px}
@@ -176,9 +166,192 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 .stripe{display:none}
 .brand .sub{margin-top:4px}
 </style>
-</head>
-<body>
+<style>
+/* ---------- Tela de acesso (login por código) ---------- */
+body.auth-lock .wrap,body.auth-lock .dock,body.auth-lock #overlay,body.auth-lock #toast{display:none!important}
+body.auth-lock{padding-bottom:0}
+body:not(.auth-lock) #auth{display:none}
+#auth{min-height:calc(100dvh - 40px);display:flex;align-items:center;justify-content:center;padding:16px 0}
+.auth-card{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:28px 22px 22px}
+.auth-logo{display:flex;justify-content:center;margin-bottom:18px;min-height:45px}
+.auth-logo h1{margin:0;line-height:0}
+.auth-logo img{width:min(180px,60vw);height:auto}
+.auth-card h2{margin:0 0 6px;font:700 24px/1.1 var(--font-d);text-transform:uppercase;letter-spacing:.04em;text-align:center}
+.auth-sub{margin:0 0 6px;text-align:center;color:var(--mut);font-size:14px}
+.auth-btn{width:100%;margin-top:16px}
+.auth-card .field input{text-align:center}
+#authCode{font:600 28px/1 var(--font-b);letter-spacing:.35em;font-variant-numeric:tabular-nums;padding-left:.35em}
+.auth-timer{margin:10px 0 0;text-align:center;font-size:13.5px;color:var(--mut)}
+.auth-timer.off{color:var(--danger)}
+.auth-links{display:flex;justify-content:space-between;gap:8px;margin-top:8px}
+.linkbtn{border:0;background:none;color:var(--ink);text-decoration:underline;min-height:44px;padding:0 4px;font-size:14px;cursor:pointer}
+.linkbtn:disabled{opacity:.45;cursor:not-allowed;text-decoration:none}
+.auth-msg{margin:14px 0 0;padding:10px 12px;border-radius:6px;border:1px solid var(--danger);color:var(--danger);font-size:14px;text-align:center}
+.auth-msg.info{border-color:var(--line);color:var(--ink)}
+.auth-demo{margin:14px 0 0;padding:10px 12px;border:1px dashed var(--mut);border-radius:6px;font-size:13px;text-align:center;color:var(--mut)}
+.auth-demo b{color:var(--ink);letter-spacing:.2em}
+</style>
+<section id="auth" aria-label="Acesso ao FlashZap Business">
+  <div class="auth-card">
+    <div class="auth-logo" id="authLogo"></div>
+    <div id="authStep1">
+      <h2>Entrar</h2>
+      <p class="auth-sub">Use o e-mail da sua compra na Hotmart. Vamos enviar um código de acesso para ele.</p>
+      <form id="authForm1" novalidate>
+        <div class="field"><label for="authEmail">E-mail da compra</label><input id="authEmail" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="voce@email.com"></div>
+        <button class="btn primary auth-btn" id="authSend" type="submit">Enviar código</button>
+      </form>
+    </div>
+    <div id="authStep2" hidden>
+      <h2>Digite o código</h2>
+      <p class="auth-sub">Enviamos um código de 6 números para <b id="authMail"></b>. Ele vale por 2 minutos.</p>
+      <form id="authForm2" novalidate>
+        <div class="field"><label for="authCode">Código</label><input id="authCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></div>
+        <p class="auth-timer" id="authTimer"></p>
+        <button class="btn primary auth-btn" id="authVerify" type="submit">Entrar</button>
+      </form>
+      <div class="auth-links">
+        <button class="linkbtn" id="authResend" type="button">Reenviar código</button>
+        <button class="linkbtn" id="authBack" type="button">Trocar e-mail</button>
+      </div>
+    </div>
+    <p class="auth-msg" id="authMsg" role="alert" hidden></p>
+    <p class="auth-demo" id="authDemo" hidden></p>
+  </div>
+</section>
+<script>
+(function(){
+'use strict';
+/* Configuração. Com apiBase vazio o login roda em MODO DE TESTE (o código aparece na tela, sem e-mail).
+   Quando o servidor existir, preencha apiBase com o endereço dele (ex.: 'https://seu-servidor.com/api'). */
+var CFG={apiBase:'',sessionDays:7,codeSeconds:120,resendSeconds:30,maxTries:5,checkSeconds:60};
+var SKEY='flashzap.auth',DKEY='flashzap.device';
+var $=function(s){return document.querySelector(s)};
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function lsDel(k){try{localStorage.removeItem(k)}catch(e){}}
+function rnd(n){var a=new Uint8Array(n);(window.crypto||window.msCrypto).getRandomValues(a);return Array.prototype.map.call(a,function(b){return ('0'+b.toString(16)).slice(-2)}).join('')}
+var REASON={
+  no_license:'Não encontramos uma compra ativa para este e-mail.',
+  invalid:'Código incorreto. Confira e tente de novo.',
+  expired:'O código expirou. Peça um novo código.',
+  too_many:'Muitas tentativas. Peça um novo código.',
+  other_device:'Sua conta foi acessada em outro aparelho. Entre novamente para continuar aqui.',
+  session_expired:'Seu acesso expirou depois de 7 dias sem uso. Entre novamente com um novo código.',
+  network:'Sem conexão. Verifique a internet e tente de novo.'
+};
+var device=lsGet(DKEY);if(!device){device=rnd(12);lsSet(DKEY,device)}
+function readSession(){var r=lsGet(SKEY);if(!r)return null;try{var s=JSON.parse(r);return (s&&s.email&&s.token&&s.lastSeen)?s:null}catch(e){return null}}
+function sessionValid(s){return !!s&&(Date.now()-s.lastSeen)<CFG.sessionDays*864e5}
+function touch(){var s=readSession();if(!s)return;s.lastSeen=Date.now();lsSet(SKEY,JSON.stringify(s))}
 
+var demo=!CFG.apiBase,demoData=null;
+async function demoCall(path,b){
+  if(path==='/send-code'){var c=String(100000+(parseInt(rnd(4),16)%900000));demoData={email:b.email,code:c,exp:Date.now()+CFG.codeSeconds*1000};return {ok:true,demoCode:c}}
+  if(path==='/verify-code'){
+    if(!demoData||demoData.email!==b.email||Date.now()>demoData.exp)return {ok:false,reason:'expired'};
+    if(b.code!==demoData.code)return {ok:false,reason:'invalid'};
+    demoData=null;return {ok:true,token:'demo-'+rnd(8)};
+  }
+  return {ok:true};
+}
+async function call(path,body){
+  if(demo)return demoCall(path,body);
+  var r;
+  try{r=await fetch(CFG.apiBase.replace(/\/$/,'')+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})}
+  catch(e){return {ok:false,reason:'network'}}
+  try{return await r.json()}catch(e){return {ok:false,reason:'network'}}
+}
+
+var email='',tries=0,expAt=0,resendAt=0,timerId=null,watchId=null;
+function show(step){$('#authStep1').hidden=step!==1;$('#authStep2').hidden=step!==2;if(step===1)stopTimer()}
+function msg(t,info){var m=$('#authMsg');if(!t){m.hidden=true;m.textContent='';return}m.textContent=t;m.className='auth-msg'+(info?' info':'');m.hidden=false}
+function lock(){document.body.classList.add('auth-lock')}
+function unlock(){document.body.classList.remove('auth-lock')}
+function fmt(s){return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2)}
+function stopTimer(){if(timerId){clearInterval(timerId);timerId=null}}
+function tick(){
+  var left=Math.ceil((expAt-Date.now())/1000),t=$('#authTimer'),v=$('#authVerify'),rs=$('#authResend');
+  if(left>0){t.textContent='Código válido por '+fmt(left);t.className='auth-timer';v.disabled=false}
+  else{t.textContent='Código expirado. Peça um novo código.';t.className='auth-timer off';v.disabled=true}
+  var w=Math.ceil((resendAt-Date.now())/1000);
+  if(w>0){rs.disabled=true;rs.textContent='Reenviar código ('+w+'s)'}else{rs.disabled=false;rs.textContent='Reenviar código'}
+}
+function startTimer(){expAt=Date.now()+CFG.codeSeconds*1000;resendAt=Date.now()+CFG.resendSeconds*1000;stopTimer();tick();timerId=setInterval(tick,500)}
+
+async function sendCode(){
+  var btn=$('#authSend'),rs=$('#authResend');btn.disabled=true;rs.disabled=true;msg('');
+  var r=await call('/send-code',{email:email});
+  btn.disabled=false;
+  if(!r||!r.ok){show(1);msg(REASON[(r&&r.reason)]||REASON.network);return}
+  tries=0;$('#authMail').textContent=email;$('#authCode').value='';show(2);startTimer();
+  var d=$('#authDemo');
+  if(demo&&r.demoCode){d.innerHTML='MODO DE TESTE: nenhum e-mail foi enviado. Seu código é <b></b>.';d.querySelector('b').textContent=r.demoCode;d.hidden=false}else{d.hidden=true}
+  setTimeout(function(){try{$('#authCode').focus()}catch(e){}},50);
+}
+async function verify(){
+  var code=$('#authCode').value.replace(/\D/g,'');
+  if(code.length!==6){msg('Digite os 6 números do código.');return}
+  var btn=$('#authVerify');btn.disabled=true;msg('');
+  var r=await call('/verify-code',{email:email,code:code,device:device});
+  if(r&&r.ok&&r.token){
+    lsSet(SKEY,JSON.stringify({email:email,token:r.token,lastSeen:Date.now()}));
+    stopTimer();$('#authDemo').hidden=true;msg('');unlock();startWatch();return;
+  }
+  btn.disabled=false;
+  if(r&&r.reason==='invalid'){
+    tries++;
+    if(tries>=CFG.maxTries){show(1);msg(REASON.too_many);return}
+    msg(REASON.invalid+' ('+(CFG.maxTries-tries)+' tentativas restantes)');return;
+  }
+  if(r&&(r.reason==='expired'||r.reason==='too_many')){show(1);msg(REASON[r.reason]);return}
+  msg(REASON[(r&&r.reason)]||REASON.network);
+}
+function logout(reasonKeyOrText){
+  var prev=readSession();lsDel(SKEY);stopWatch();lock();show(1);
+  if(prev&&prev.email)$('#authEmail').value=prev.email;
+  $('#authDemo').hidden=true;
+  msg(REASON[reasonKeyOrText]||reasonKeyOrText||'',false);
+}
+async function check(){
+  var s=readSession();if(!s)return;
+  if(!sessionValid(s)){logout('session_expired');return}
+  if(!demo){
+    var r=await call('/session',{email:s.email,token:s.token,device:device});
+    if(r&&r.ok===false&&r.reason&&r.reason!=='network'){logout(r.reason==='no_license'?'no_license':(r.reason==='other_device'?'other_device':'session_expired'));return}
+    if(r&&r.ok===false)return;
+  }
+  touch();
+}
+function startWatch(){
+  stopWatch();check();
+  watchId=setInterval(function(){if(!document.hidden)check()},CFG.checkSeconds*1000);
+}
+function stopWatch(){if(watchId){clearInterval(watchId);watchId=null}}
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&readSession())check()});
+window.flashzapLogout=function(){logout('')};
+
+var s0=readSession(),authed=sessionValid(s0);
+if(!authed)lock();
+document.addEventListener('DOMContentLoaded',function(){
+  var lg=document.querySelector('.top .logo');
+  $('#authLogo').innerHTML=lg?lg.outerHTML:'<h1>FlashZap Business</h1>';
+  if(s0&&s0.email)$('#authEmail').value=s0.email;
+  if(authed)startWatch();
+  else if(s0)msg(REASON.session_expired,true);
+  $('#authForm1').addEventListener('submit',function(e){
+    e.preventDefault();
+    var v=$('#authEmail').value.trim().toLowerCase();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){msg('Digite um e-mail válido.');return}
+    email=v;sendCode();
+  });
+  $('#authForm2').addEventListener('submit',function(e){e.preventDefault();verify()});
+  $('#authCode').addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').slice(0,6)});
+  $('#authResend').addEventListener('click',function(){if(email)sendCode()});
+  $('#authBack').addEventListener('click',function(){show(1);msg('');$('#authDemo').hidden=true});
+});
+})();
+</script>
 
 <div class="wrap">
   <header class="top">
@@ -194,7 +367,6 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
     <button class="btn primary" id="btnAdd">+ Novo contato</button>
   </section>
   <main class="acc" id="acc" aria-label="Contatos por categoria"></main>
-  <div id="movebar" hidden></div>
 </div>
 <div id="overlay" hidden><div id="sheet" role="dialog" aria-modal="true" aria-label="Detalhes"></div></div>
 <span id="syncChip" data-s="local" hidden><span id="syncTxt"></span></span>
@@ -365,7 +537,7 @@ var CHEV='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="cu
 var WAICON='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 20.5l1.7-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>';
 function rowHtml(p){
   var c=cOf(p.tel),nome=c.nome||fmtTel(p.tel),sub=[c.empresa,(p.obra&&!ui.obra)?obraName(p.obra):''].filter(Boolean).join(' · ');
-  return '<li class="rw" draggable="true" data-id="'+p.id+'"><button class="rw-main" data-act="row" data-id="'+p.id+'"><b>'+(c.fav?'<span class="st">★</span>':'')+esc(nome)+'</b>'+(sub?'<span>'+esc(sub)+'</span>':'')+'</button><a class="wa" href="https://wa.me/'+p.tel+'" target="_blank" rel="noopener" aria-label="Abrir conversa de '+esc(nome)+' no WhatsApp">'+WAICON+'WhatsApp</a></li>';
+  return '<li class="rw" data-id="'+p.id+'"><button class="rw-main" data-act="row" data-id="'+p.id+'"><b>'+(c.fav?'<span class="st">★</span>':'')+esc(nome)+'</b>'+(sub?'<span>'+esc(sub)+'</span>':'')+'</button><a class="wa" href="https://wa.me/'+p.tel+'" target="_blank" rel="noopener" aria-label="Abrir conversa de '+esc(nome)+' no WhatsApp">'+WAICON+'WhatsApp</a></li>';
 }
 function catSection(c,items,open,q){
   var h='<section class="ac'+(open?' open':'')+'" style="--h:'+c.h+'"><button class="ac-h" data-act="cat" data-cat="'+c.id+'" aria-expanded="'+open+'"><span class="bar"></span><span class="nm">'+esc(c.nome)+'</span><em>'+items.length+'</em>'+CHEV+'</button>';
@@ -391,7 +563,7 @@ function renderList(){
   if(ui.open&&!db.categorias.some(function(c){return c.id===ui.open}))ui.open=null;
   db.categorias.forEach(function(c){
     var items=P.filter(function(p){return p.categoria===c.id});
-    if(narrow&&!items.length)return;
+    if(!items.length)return;
     html+=catSection(c,items,q?true:ui.open===c.id,q);
   });
   if(!db.papeis.length)html+='<p class="empty-all">Sua agenda está vazia. Toque em “+ Novo contato” para começar.</p>';
@@ -415,14 +587,12 @@ function renderChrome(){
   if(db.papeis.some(function(p){return !p.obra}))o.push(['__none','Sem obra']);
   o.push(['__newobra','+ Nova obra…']);
   ui.obra=fillSelect($('#fObra'),'Todas as obras',o,ui.obra);
-  ui.fcat=fillSelect($('#fCat'),'Todas as categorias',db.categorias.map(function(c){return [c.id,c.nome]}),ui.fcat);
+  ui.fcat=fillSelect($('#fCat'),'Todas as categorias',db.categorias.filter(function(c){return db.papeis.some(function(p){return p.categoria===c.id})}).map(function(c){return [c.id,c.nome]}),ui.fcat);
   var sv=db.servicos.slice();db.papeis.forEach(function(p){if(sv.indexOf(p.servico)<0)sv.push(p.servico)});
   ui.fserv=fillSelect($('#fServ'),'Todas as classificações',sv.map(function(s){return [s,s]}),ui.fserv);
   var b=$('#banner');
   if(db.exemplo){b.hidden=false;b.innerHTML='<span>Você está vendo <b>dados de exemplo</b>. Apague para começar a sua agenda.</span><button class="btn sm" data-act="clear-ex">Apagar exemplos</button>'}
   else b.hidden=true;
-  var mb=$('#movebar');
-  mb.innerHTML='<b>Soltar em</b>'+db.categorias.map(function(c){return '<span data-cat="'+c.id+'" style="--h:'+c.h+'" class="mvc">'+esc(c.nome)+'</span>'}).join('');
 }
 function render(){sortLists();renderChrome();renderList();if(S.type)refreshSheet()}
 
@@ -482,7 +652,7 @@ function papelFields(){
   var pre=realObra(),oo=db.obras.map(function(o){return '<option value="'+esc(o.id)+'"'+(o.id===pre?' selected':'')+'>'+esc(o.nome)+'</option>'}).join('');
   return '<div class="field"><label for="f-obra">Obra</label><select id="f-obra"><option value="">Sem obra</option>'+oo+'<option value="__new">+ Nova obra…</option></select><input id="f-obra-new" placeholder="Nome da nova obra" autocomplete="off" hidden></div>'
    +'<div class="field"><label>Categoria</label><div class="chips" id="f-cats">'+db.categorias.map(function(c,i){return '<button type="button" class="chipbtn" aria-pressed="false" data-act="pickcat" data-v="'+esc(c.id)+'">'+esc(c.nome)+'</button>'}).join('')+'</div><input id="f-cat-new" placeholder="Outra categoria" autocomplete="off"></div>'
-   +'<div class="field"><label>Classificação (pode marcar mais de uma)</label><div class="chips" id="f-servs">'+db.servicos.map(function(s){return '<button type="button" class="chipbtn" aria-pressed="false" data-act="tog" data-v="'+esc(s)+'">'+esc(s)+'</button>'}).join('')+'</div><input id="f-serv-new" placeholder="Outra classificação (separe por vírgula)" autocomplete="off"></div>';
+   +'<div class="field"><label>Classificação (pode marcar mais de uma)</label><div class="chips" id="f-servs">'+db.servicos.map(function(s){return '<button type="button" class="chipbtn" aria-pressed="false" data-act="tog" data-v="'+esc(s)+'">'+esc(s)+'</button>'}).join('')+'</div><input id="f-serv-new" placeholder="Outra classificação (separe por vírgula)" autocomplete="off"></div>'+'<p class="note"><button type="button" class="btn sm" data-act="open-lists">Excluir ou renomear categorias e classificações</button></p>';
 }
 function readPapelFields(){
   var servs=Array.prototype.map.call(sheet.querySelectorAll('#f-servs [aria-pressed="true"]'),function(b){return b.dataset.v}).concat($('#f-serv-new').value.split(',').map(function(s){return s.trim()}).filter(Boolean));
@@ -543,8 +713,16 @@ function usage(kind,id){
   return db.papeis.filter(function(p){return kind==='cat'?p.categoria===id:kind==='serv'?p.servico===id:p.obra===id}).length;
 }
 function listSection(kind,title,items){
-  return '<h3>'+title+'</h3>'+items.map(function(i){
-    return '<div class="li"><input aria-label="Renomear '+esc(i.label)+'" value="'+esc(i.label)+'" data-list="'+kind+'" data-id="'+esc(i.id)+'"><span class="n">'+i.used+'</span><button class="x sm" data-act="del-item" data-list="'+kind+'" data-id="'+esc(i.id)+'" aria-label="Excluir '+esc(i.label)+'"'+((i.used&&kind!=='obra')?' disabled title="Em uso"':'')+'>×</button></div>';
+  return '<h3 id="sec-'+kind+'">'+title+'</h3>'+items.map(function(i){
+    var row='<div class="li"><input aria-label="Renomear '+esc(i.label)+'" value="'+esc(i.label)+'" data-list="'+kind+'" data-id="'+esc(i.id)+'"><span class="n">'+i.used+'</span><button class="x sm" data-act="del-item" data-list="'+kind+'" data-id="'+esc(i.id)+'" aria-label="Excluir '+esc(i.label)+'">×</button></div>';
+    var cl=S.confirmList;
+    if(cl&&cl.kind===kind&&cl.id===i.id){
+      var opts=kind==='cat'?db.categorias.filter(function(c){return c.id!==i.id}).map(function(c){return [c.id,c.nome]}):db.servicos.filter(function(x){return x!==i.id}).map(function(x){return [x,x]}).concat([[SEMCLASS,SEMCLASS]]);
+      row+='<div class="pp" style="border-color:var(--danger)"><div>“'+esc(i.label)+'” está em <b>'+i.used+'</b> '+(i.used===1?'serviço':'serviços')+'. '+(opts.length?'Para onde mover '+(i.used===1?'ele':'eles')+' antes de excluir?':'Crie outra categoria antes de excluir esta.')+'</div>'
+        +(opts.length?'<div class="field" style="margin-top:0"><select id="rep-sel" aria-label="Mover para">'+opts.map(function(o){return '<option value="'+esc(o[0])+'">'+esc(o[1])+'</option>'}).join('')+'</select></div>':'')
+        +'<div class="row2" style="margin-top:0">'+(opts.length?'<button class="btn danger" data-act="list-del-yes">Mover e excluir</button>':'')+'<button class="btn" data-act="list-del-no">Cancelar</button></div></div>';
+    }
+    return row;
   }).join('')+'<div class="li"><input id="add-'+kind+'" placeholder="Adicionar…" aria-label="Novo item"><button class="btn sm" data-act="add-item" data-list="'+kind+'">Adicionar</button></div>';
 }
 function sheetSettings(){
@@ -616,15 +794,6 @@ $('#btnTheme').addEventListener('click',function(){
 });
 function applyTheme(t){if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);else document.documentElement.removeAttribute('data-theme')}
 
-/* arrastar e soltar (computador) */
-var dragId=null,mb=$('#movebar');
-acc.addEventListener('dragstart',function(e){
-  var t=e.target.closest&&e.target.closest('.rw');if(!t)return;
-  dragId=t.dataset.id;e.dataTransfer.setData('text/plain',dragId);e.dataTransfer.effectAllowed='move';mb.hidden=false;
-});
-acc.addEventListener('dragend',function(){dragId=null;mb.hidden=true;Array.prototype.forEach.call(mb.querySelectorAll('.over'),function(n){n.classList.remove('over')})});
-mb.addEventListener('dragover',function(e){var b=e.target.closest('[data-cat]');if(!b)return;e.preventDefault();Array.prototype.forEach.call(mb.querySelectorAll('.over'),function(n){n.classList.remove('over')});b.classList.add('over')});
-mb.addEventListener('drop',function(e){var b=e.target.closest('[data-cat]');if(!b||!dragId)return;e.preventDefault();var id=dragId;dragId=null;mb.hidden=true;movePapel(id,b.dataset.cat)});
 
 /* ações dentro das janelas */
 sheet.addEventListener('input',function(e){
@@ -699,6 +868,13 @@ sheet.addEventListener('click',function(e){
   else if(a==='pull'){ghPull().then(function(r){if(r&&r!=='empty'){adopt(r)}else if(r==='empty')toast('Ainda não há arquivo no GitHub');refreshSheet()})}
   else if(a==='add-item')addItem(el.dataset.list);
   else if(a==='del-item')delItem(el.dataset.list,id);
+  else if(a==='list-del-no'){S.confirmList=null;refreshSheet()}
+  else if(a==='list-del-yes'){var cl=S.confirmList,rep=$('#rep-sel');if(!cl||!rep)return;var rv=rep.value;
+    db.papeis.forEach(function(p){if(cl.kind==='cat'&&p.categoria===cl.id)p.categoria=rv;if(cl.kind==='serv'&&p.servico===cl.id)p.servico=rv});
+    var seen={};db.papeis=db.papeis.filter(function(p){var k=[p.tel,p.obra,p.categoria,p.servico].join('|');if(seen[k])return false;seen[k]=1;return true});
+    if(cl.kind==='cat')db.categorias=db.categorias.filter(function(c){return c.id!==cl.id});else db.servicos=db.servicos.filter(function(x){return x!==cl.id});
+    S.confirmList=null;commit();toast(cl.kind==='cat'?'Categoria excluída':'Classificação excluída')}
+  else if(a==='open-lists'){S={type:'settings'};openSheet();setTimeout(function(){var h=sheet.querySelector('#sec-cat');if(h)h.scrollIntoView()},50)}
   else if(a==='obra-del-all')removeObra(S.confirmObra,'all');
   else if(a==='obra-del-keep')removeObra(S.confirmObra,'keep');
   else if(a==='obra-del-no'){S.confirmObra=null;refreshSheet()}
@@ -782,7 +958,7 @@ function removeObra(id,mode){
 }
 function delItem(kind,id){
   if(kind==='obra'&&usage('obra',id)){S.confirmObra=id;refreshSheet();var cp=sheet.querySelector('.pp[style*="danger"]');if(cp)cp.scrollIntoView({block:'center'});return}
-  if(usage(kind,id))return;
+  if(usage(kind,id)){S.confirmList={kind:kind,id:id};refreshSheet();var rs=sheet.querySelector('#rep-sel');if(rs)rs.scrollIntoView({block:'center'});else{var cp2=sheet.querySelector('.pp[style*="danger"]');if(cp2)cp2.scrollIntoView({block:'center'})}return}
   if(kind==='cat')db.categorias=db.categorias.filter(function(c){return c.id!==id});
   else if(kind==='serv')db.servicos=db.servicos.filter(function(s){return s!==id});
   else db.obras=db.obras.filter(function(o){return o.id!==id});
@@ -799,5 +975,4 @@ window.__obra={get db(){return db}};
 })();
 </script>
 
-</body>
-</html>
+</body></html>
