@@ -1098,4 +1098,26 @@ function removeObra(id,mode){
     var seen={};db.papeis=db.papeis.filter(function(p){var k=[p.tel,p.obra,p.servico,p.categoria].join('|');if(seen[k])return false;seen[k]=1;return true});
   }
   db.obras=db.obras.filter(function(o){return o.id!==id});
-  if(ui.obra===id){ui.obra='';ls
+  if(ui.obra===id){ui.obra='';lsSet(OBRAKEY,'')}
+  S.confirmObra=null;commit();toast('Obra excluída');
+}
+function delItem(kind,id){
+  if(kind==='obra'&&usage('obra',id)){S.confirmObra=id;refreshSheet();var cp=sheet.querySelector('.pp[style*="danger"]');if(cp)cp.scrollIntoView({block:'center'});return}
+  if(usage(kind,id)){S.confirmList={kind:kind,id:id};refreshSheet();var rs=sheet.querySelector('#rep-sel');if(rs)rs.scrollIntoView({block:'center'});else{var cp2=sheet.querySelector('.pp[style*="danger"]');if(cp2)cp2.scrollIntoView({block:'center'})}return}
+  if(kind==='cat')db.categorias=db.categorias.filter(function(c){return c.id!==id});
+  else if(kind==='serv')db.servicos=db.servicos.filter(function(s){return s!==id});
+  else db.obras=db.obras.filter(function(o){return o.id!==id});
+  commit();
+}
+
+/* ---------- início ---------- */
+applyTheme(lsGet(THKEY));
+setSync(syncState==='idle'?'idle':'local');
+render();
+if(ghOk())startSync();
+syncDock();
+window.__obra={get db(){return db}};
+})();
+</script>
+
+</body></html>
