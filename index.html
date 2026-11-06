@@ -719,6 +719,27 @@ function servNew(id){
   var n=($('#sv-new')||{value:''}).value.trim();if(!n)return toast('Digite o nome da nova função');
   var v=ensureServ(n);S.editServ=null;S.newServFor=null;setServico(id,v);
 }
+function grpToggle(kind,ob,v){
+  var g=db.papeis.filter(function(p){return p.tel===S.tel&&p.obra===ob});if(!g.length)return;
+  var fs=[],cs=[];g.forEach(function(p){if(fs.indexOf(p.servico)<0)fs.push(p.servico);if(cs.indexOf(p.categoria)<0)cs.push(p.categoria)});
+  var mine=kind==='serv'?fs:cs,other=kind==='serv'?cs:fs;
+  if(mine.indexOf(v)>=0){
+    if(mine.length===1)return toast(kind==='serv'?'Mantenha ao menos uma função':'Mantenha ao menos um setor');
+    db.papeis=db.papeis.filter(function(p){return !(p.tel===S.tel&&p.obra===ob&&(kind==='serv'?p.servico:p.categoria)===v)});
+  }else{
+    other.forEach(function(o){db.papeis.push({id:uid(),tel:S.tel,obra:ob,categoria:kind==='serv'?o:v,servico:kind==='serv'?v:o,hist:[]})});
+  }
+  commit();
+}
+function grpNew(kind,ob){
+  var el=$(kind==='serv'?'#sv-new':'#mv-new'),n=el?el.value.trim():'';
+  if(!n)return toast(kind==='serv'?'Digite o nome da nova função':'Digite o nome do novo setor');
+  var v=kind==='serv'?ensureServ(n):ensureCat(n);
+  if(kind==='serv')S.newServFor=null;else S.newCatFor=null;
+  var has=db.papeis.some(function(p){return p.tel===S.tel&&p.obra===ob&&(kind==='serv'?p.servico:p.categoria)===v});
+  if(has){refreshSheet();return}
+  grpToggle(kind,ob,v);
+}
 function setServico(id,sv){
   var p=db.papeis.find(function(x){return x.id===id});
   if(!p||p.servico===sv){refreshSheet();return}
@@ -822,18 +843,27 @@ function sheetContact(){
     }
   }
   h+='<h3>Serviços e obras</h3><ul class="pps">';
-  det.forEach(function(p){
-    var cat=catOf(p.categoria),last=(p.hist||[]).slice(-1)[0];
-    h+='<li class="pp"><div class="pp-top"><strong>'+esc(obraName(p.obra))+'</strong></div>'
-      +'<div class="mv"><small>Função</small>'
-      +(S.editServ!==p.id?'<span class="chipbtn on" style="cursor:default">'+esc(p.servico)+'</span><button class="btn sm" data-act="serv-edit" data-id="'+p.id+'">Mudar função</button>'
-      :db.servicos.map(function(v){return '<button class="chipbtn'+(v===p.servico?' on':'')+'" data-act="serv-set" data-id="'+p.id+'" data-v="'+esc(v)+'">'+esc(v)+'</button>'}).join('')+(S.newServFor===p.id?'<span class="confirm" style="flex:1 1 100%"><input id="sv-new" placeholder="Nome da nova função" autocomplete="off" style="flex:1;min-width:0;height:36px;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:0 10px;font-size:16px"><button class="btn sm primary" data-act="serv-new-ok" data-id="'+p.id+'">Criar e usar</button><button class="btn sm" data-act="serv-new-no">Cancelar</button></span>':'<button class="chipbtn novo" data-act="serv-new" data-id="'+p.id+'">+ Nova função</button>'))
+  var grupos=[],gmap={};
+  det.forEach(function(p){var g=gmap['o:'+p.obra];if(!g){g=gmap['o:'+p.obra]={ob:p.obra,ps:[]};grupos.push(g)}g.ps.push(p)});
+  var inp='style="flex:1;min-width:0;height:36px;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:0 10px;font-size:16px"';
+  grupos.forEach(function(g){
+    var key='o:'+g.ob,fs=db.servicos.filter(function(v){return g.ps.some(function(p){return p.servico===v})}),
+        cs=db.categorias.filter(function(k){return g.ps.some(function(p){return p.categoria===k.id})}),
+        ed=S.editServ===key,ec=S.editCat===key;
+    h+='<li class="pp"><div class="pp-top"><strong>'+esc(obraName(g.ob))+'</strong></div>'
+      +'<div class="mv"><small>'+(fs.length>1?'Funções':'Função')+'</small>'
+      +(ed?db.servicos.map(function(v){return '<button class="chipbtn'+(fs.indexOf(v)>=0?' on':'')+'" data-act="g-serv" data-ob="'+esc(g.ob)+'" data-v="'+esc(v)+'">'+esc(v)+'</button>'}).join('')
+        +(S.newServFor===key?'<span class="confirm" style="flex:1 1 100%"><input id="sv-new" placeholder="Nome da nova função" autocomplete="off" '+inp+'><button class="btn sm primary" data-act="g-serv-new-ok" data-ob="'+esc(g.ob)+'">Criar e adicionar</button><button class="btn sm" data-act="g-serv-new-no">Cancelar</button></span>':'<button class="chipbtn novo" data-act="g-serv-new" data-ob="'+esc(g.ob)+'">+ Nova função</button>')
+        +'<button class="btn sm primary" data-act="g-done">Pronto</button>'
+       :fs.map(function(v){return '<span class="chipbtn on" style="cursor:default">'+esc(v)+'</span>'}).join('')+'<button class="btn sm" data-act="g-serv-edit" data-ob="'+esc(g.ob)+'">Editar funções</button>')
       +'</div>'
-      +'<div class="mv"><small>Setor</small>'
-      +(S.editCat!==p.id?'<span class="chipbtn on" data-h style="--h:'+cat.h+';cursor:default">'+esc(cat.nome)+'</span><button class="btn sm" data-act="cat-edit" data-id="'+p.id+'">Mudar setor</button>':db.categorias.map(function(k){return '<button class="chipbtn'+(k.id===p.categoria?' on':'')+'" data-h data-act="move" data-id="'+p.id+'" data-cat="'+k.id+'" style="--h:'+k.h+'">'+esc(k.nome)+'</button>'}).join('')
-      +(S.newCatFor===p.id?'<span class="confirm" style="flex:1 1 100%"><input id="mv-new" placeholder="Nome do novo setor" autocomplete="off" style="flex:1;min-width:0;height:36px;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:0 10px;font-size:16px"><button class="btn sm primary" data-act="move-new-ok" data-id="'+p.id+'">Criar e mover</button><button class="btn sm" data-act="move-new-no">Cancelar</button></span>':'<button class="chipbtn novo" data-act="move-new" data-id="'+p.id+'">+ Novo setor</button>'))
-      +'</div><div class="pp-foot"><span>'+(last?'Movido de '+esc(catOf(last.de).nome)+' para '+esc(catOf(last.para).nome)+' em '+fmtDate(last.em):'Em '+esc(cat.nome)+' desde o cadastro')+'</span>'
-      +(S.confirm==='p:'+p.id?'<span class="confirm">Remover? <button class="btn sm danger" data-act="rm-papel-yes" data-id="'+p.id+'">Remover</button><button class="btn sm" data-act="rm-no">Não</button></span>':'<button data-act="rm-papel" data-id="'+p.id+'">Remover</button>')
+      +'<div class="mv"><small>'+(cs.length>1?'Setores':'Setor')+'</small>'
+      +(ec?db.categorias.map(function(k){return '<button class="chipbtn'+(cs.indexOf(k)>=0?' on':'')+'" data-h data-act="g-cat" data-ob="'+esc(g.ob)+'" data-cat="'+k.id+'" style="--h:'+k.h+'">'+esc(k.nome)+'</button>'}).join('')
+        +(S.newCatFor===key?'<span class="confirm" style="flex:1 1 100%"><input id="mv-new" placeholder="Nome do novo setor" autocomplete="off" '+inp+'><button class="btn sm primary" data-act="g-cat-new-ok" data-ob="'+esc(g.ob)+'">Criar e adicionar</button><button class="btn sm" data-act="g-cat-new-no">Cancelar</button></span>':'<button class="chipbtn novo" data-act="g-cat-new" data-ob="'+esc(g.ob)+'">+ Novo setor</button>')
+        +'<button class="btn sm primary" data-act="g-done">Pronto</button>'
+       :cs.map(function(k){return '<span class="chipbtn on" data-h style="--h:'+k.h+';cursor:default">'+esc(k.nome)+'</span>'}).join('')+'<button class="btn sm" data-act="g-cat-edit" data-ob="'+esc(g.ob)+'">Editar setores</button>')
+      +'</div><div class="pp-foot"><span>'+(g.ps.length===1&&(g.ps[0].hist||[]).length?(function(l){return 'Movido de '+esc(catOf(l.de).nome)+' para '+esc(catOf(l.para).nome)+' em '+fmtDate(l.em)})(g.ps[0].hist.slice(-1)[0]):'')+'</span>'
+      +(S.confirm===key?'<span class="confirm">Remover da obra? <button class="btn sm danger" data-act="rm-obra-yes" data-ob="'+esc(g.ob)+'">Remover</button><button class="btn sm" data-act="rm-no">Não</button></span>':'<button data-act="rm-obra" data-ob="'+esc(g.ob)+'">Remover</button>')
       +'</div></li>';
   });
   h+='</ul>';
@@ -946,7 +976,7 @@ sheet.addEventListener('input',function(e){
     else h.hidden=true;
   }
 });
-sheet.addEventListener('keydown',function(e){if(e.key!=='Enter')return;if(e.target.id==='o-nome'){e.preventDefault();saveObra()}if(e.target.id==='mv-new'){e.preventDefault();moveNew(S.newCatFor)}if(e.target.id==='sv-new'){e.preventDefault();servNew(S.newServFor)}});
+sheet.addEventListener('keydown',function(e){if(e.key!=='Enter')return;if(e.target.id==='o-nome'){e.preventDefault();saveObra()}if(e.target.id==='mv-new'){e.preventDefault();var ob1=String(S.newCatFor||'').slice(2);grpNew('cat',ob1)}if(e.target.id==='sv-new'){e.preventDefault();var ob2=String(S.newServFor||'').slice(2);grpNew('serv',ob2)}});
 sheet.addEventListener('change',function(e){
   if(e.target.id==='f-obra'){var nn=$('#f-obra-new');nn.hidden=e.target.value!=='__new';if(!nn.hidden)nn.focus()}
   var i=e.target.closest&&e.target.closest('input[data-list]');
@@ -982,15 +1012,21 @@ sheet.addEventListener('click',function(e){
   else if(a==='tog')el.setAttribute('aria-pressed',el.getAttribute('aria-pressed')==='true'?'false':'true');
   else if(a==='move'){S.editCat=null;S.newCatFor=null;movePapel(id,el.dataset.cat);refreshSheet()}
   else if(a==='cat-edit'){S.editCat=id;refreshSheet()}
-  else if(a==='serv-edit'){S.editServ=id;refreshSheet()}
-  else if(a==='serv-no'){S.editServ=null;S.newServFor=null;refreshSheet()}
-  else if(a==='serv-new'){S.newServFor=id;refreshSheet();var si=$('#sv-new');if(si)si.focus()}
-  else if(a==='serv-new-no'){S.newServFor=null;refreshSheet()}
-  else if(a==='serv-new-ok')servNew(id);
-  else if(a==='serv-set'){S.editServ=null;S.newServFor=null;setServico(id,el.dataset.v)}
-  else if(a==='move-new'){S.newCatFor=id;refreshSheet();var mi=$('#mv-new');if(mi)mi.focus()}
-  else if(a==='move-new-no'){S.newCatFor=null;refreshSheet()}
-  else if(a==='move-new-ok')moveNew(id);
+  else if(a==='g-serv-edit'){S.editServ='o:'+el.dataset.ob;S.editCat=null;refreshSheet()}
+  else if(a==='g-cat-edit'){S.editCat='o:'+el.dataset.ob;S.editServ=null;refreshSheet()}
+  else if(a==='g-done'){S.editServ=S.editCat=S.newServFor=S.newCatFor=null;refreshSheet()}
+  else if(a==='g-serv')grpToggle('serv',el.dataset.ob,el.dataset.v);
+  else if(a==='g-cat')grpToggle('cat',el.dataset.ob,el.dataset.cat);
+  else if(a==='g-serv-new'){S.newServFor='o:'+el.dataset.ob;refreshSheet();var si=$('#sv-new');if(si)si.focus()}
+  else if(a==='g-serv-new-no'){S.newServFor=null;refreshSheet()}
+  else if(a==='g-serv-new-ok')grpNew('serv',el.dataset.ob);
+  else if(a==='g-cat-new'){S.newCatFor='o:'+el.dataset.ob;refreshSheet();var mi=$('#mv-new');if(mi)mi.focus()}
+  else if(a==='g-cat-new-no'){S.newCatFor=null;refreshSheet()}
+  else if(a==='g-cat-new-ok')grpNew('cat',el.dataset.ob);
+  else if(a==='rm-obra'){S.confirm='o:'+el.dataset.ob;refreshSheet()}
+  else if(a==='rm-obra-yes'){var ob0=el.dataset.ob;db.papeis=db.papeis.filter(function(p){return !(p.tel===S.tel&&p.obra===ob0)});S.confirm=null;
+    if(!db.papeis.some(function(p){return p.tel===S.tel})){db.contatos=db.contatos.filter(function(c){return c.tel!==S.tel});closeSheet()}
+    commit();toast('Removido da obra')}
   else if(a==='edit'){S.editing=true;refreshSheet()}
   else if(a==='cancel-edit'){S.editing=false;refreshSheet()}
   else if(a==='copytel'){copy(fmtTel(S.tel))}
