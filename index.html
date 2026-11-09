@@ -812,9 +812,21 @@ function sheetContact(){
     h+='<div class="field"><label for="e-nome">Nome</label><input id="e-nome" value="'+esc(dr.nome)+'"></div><div class="field"><label for="e-emp">Empresa</label><input id="e-emp" value="'+esc(dr.emp)+'"></div><div class="field"><label for="e-tel">Telefone</label><div class="li" style="margin:0"><input id="e-tel" type="tel" inputmode="tel" value="'+esc(dr.tel)+'"><button type="button" class="btn" data-act="copytel" style="white-space:nowrap">Copiar número</button></div></div><p class="hint" id="errEdit" style="color:var(--danger)" hidden></p>';
     var mt=S.mergeTel&&db.contatos.find(function(x){return x.tel===S.mergeTel});
     if(mt){
-      var nOld=db.papeis.filter(function(p){return p.tel===c.tel}).length,nNew=db.papeis.filter(function(p){return p.tel===mt.tel}).length;
-      h+='<div class="pp" style="margin-top:12px;border-color:var(--danger)"><div><strong>Esse número já está salvo como “'+esc(mt.nome||fmtTel(mt.tel))+'”'+(mt.empresa?' ('+esc(mt.empresa)+')':'')+'.</strong></div>'
-       +'<div class="mut">Quer passar todas as obras e funções do número antigo ('+nOld+(nOld===1?' vínculo':' vínculos')+') para ele? Ele já tem '+nNew+(nNew===1?' vínculo':' vínculos')+', que ficam como estão. O número antigo deixa de existir.</div>'
+      var tPs=db.papeis.filter(function(p){return p.tel===mt.tel});
+      var key=function(p){return [p.obra,p.categoria,p.servico].join('|')};
+      var have={};tPs.forEach(function(p){have[key(p)]=1});
+      var nDup=0;
+      var li=ps.map(function(p){var dup=have[key(p)];if(dup)nDup++;return '<li>'+esc(obraName(p.obra))+': '+esc(p.servico)+' ('+esc(catOf(p.categoria).nome)+')'+(dup?' <span class="mut">(já existe, não duplica)</span>':'')+'</li>'}).join('');
+      var onde=tPs.map(function(p){return esc(obraName(p.obra))+' ('+esc(p.servico)+')'}).filter(function(x,i,a){return a.indexOf(x)===i}).join(', ');
+      var quem=(S.editDraft&&S.editDraft.nome.trim())||c.nome||fmtTel(c.tel);
+      h+='<div class="pp" style="margin-top:12px;border-color:var(--danger)">'
+       +'<div><strong>Esse número já está na agenda</strong></div>'
+       +'<div><strong>'+esc(mt.nome||fmtTel(mt.tel))+(mt.empresa?' · '+esc(mt.empresa):'')+'</strong></div>'
+       +(onde?'<div class="mut">Já está em: '+onde+'</div>':'')
+       +'<div>Ao confirmar, <strong>'+esc(quem)+'</strong> passa a usar este número e leva junto:</div>'
+       +'<ul style="margin:0;padding-left:20px">'+li+'</ul>'
+       +(nDup?'<div class="mut">'+nDup+(nDup===1?' já existia e não será duplicado.':' já existiam e não serão duplicados.')+'</div>':'')
+       +'<div>'+esc(fmtTel(c.tel))+' → '+esc(fmtTel(mt.tel))+'</div><div class="mut">O número antigo deixa de existir.</div>'
        +'<div class="row2" style="margin-top:0"><button class="btn primary" data-act="merge-yes">Sim, trocar o número</button><button class="btn" data-act="merge-no">Cancelar</button></div></div>';
     }else h+='<div class="row2"><button class="btn primary" data-act="save-edit">Salvar</button><button class="btn" data-act="cancel-edit">Cancelar</button></div>';
   }else{
