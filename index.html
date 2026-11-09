@@ -808,7 +808,15 @@ function sheetContact(){
   var ps=db.papeis.filter(function(p){return p.tel===c.tel});
   var h='<div class="sh-head"><div><h2>'+esc(c.nome||'Sem nome')+'</h2><p class="mut">'+esc(c.empresa||'Sem empresa')+'</p></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>';
   if(S.editing){
-    h+='<div class="field"><label for="e-nome">Nome</label><input id="e-nome" value="'+esc(c.nome)+'"></div><div class="field"><label for="e-emp">Empresa</label><input id="e-emp" value="'+esc(c.empresa)+'"></div><div class="field"><label for="e-tel">Telefone</label><div class="li" style="margin:0"><input id="e-tel" type="tel" inputmode="tel" value="'+esc(fmtTel(c.tel))+'"><button type="button" class="btn" data-act="copytel" style="white-space:nowrap">Copiar número</button></div></div><p class="hint" id="errEdit" style="color:var(--danger)" hidden></p><div class="row2"><button class="btn primary" data-act="save-edit">Salvar</button><button class="btn" data-act="cancel-edit">Cancelar</button></div>';
+    var dr=S.editDraft||{nome:c.nome,emp:c.empresa,tel:fmtTel(c.tel)};
+    h+='<div class="field"><label for="e-nome">Nome</label><input id="e-nome" value="'+esc(dr.nome)+'"></div><div class="field"><label for="e-emp">Empresa</label><input id="e-emp" value="'+esc(dr.emp)+'"></div><div class="field"><label for="e-tel">Telefone</label><div class="li" style="margin:0"><input id="e-tel" type="tel" inputmode="tel" value="'+esc(dr.tel)+'"><button type="button" class="btn" data-act="copytel" style="white-space:nowrap">Copiar número</button></div></div><p class="hint" id="errEdit" style="color:var(--danger)" hidden></p>';
+    var mt=S.mergeTel&&db.contatos.find(function(x){return x.tel===S.mergeTel});
+    if(mt){
+      var nOld=db.papeis.filter(function(p){return p.tel===c.tel}).length,nNew=db.papeis.filter(function(p){return p.tel===mt.tel}).length;
+      h+='<div class="pp" style="margin-top:12px;border-color:var(--danger)"><div><strong>Esse número já está salvo como “'+esc(mt.nome||fmtTel(mt.tel))+'”'+(mt.empresa?' ('+esc(mt.empresa)+')':'')+'.</strong></div>'
+       +'<div class="mut">Quer passar todas as obras e funções do número antigo ('+nOld+(nOld===1?' vínculo':' vínculos')+') para ele? Ele já tem '+nNew+(nNew===1?' vínculo':' vínculos')+', que ficam como estão. O número antigo deixa de existir.</div>'
+       +'<div class="row2" style="margin-top:0"><button class="btn primary" data-act="merge-yes">Sim, trocar o número</button><button class="btn" data-act="merge-no">Cancelar</button></div></div>';
+    }else h+='<div class="row2"><button class="btn primary" data-act="save-edit">Salvar</button><button class="btn" data-act="cancel-edit">Cancelar</button></div>';
   }else{
     h+='<div class="telrow"><p class="telbig">'+esc(fmtTel(c.tel))+'</p><button class="btn sm" data-act="copytel">Copiar número</button></div><div class="acts"><a class="btn wa" href="https://wa.me/'+c.tel+'" target="_blank" rel="noopener">WhatsApp</a><a class="btn" href="tel:+'+c.tel+'">Ligar</a><button class="btn" data-act="fav">'+(c.fav?'★ Favorito':'☆ Favoritar')+'</button><button class="btn" data-act="edit">Editar</button></div>';
   }
@@ -991,8 +999,10 @@ sheet.addEventListener('click',function(e){
   else if(a==='move-new'){S.newCatFor=id;refreshSheet();var mi=$('#mv-new');if(mi)mi.focus()}
   else if(a==='move-new-no'){S.newCatFor=null;refreshSheet()}
   else if(a==='move-new-ok')moveNew(id);
-  else if(a==='edit'){S.editing=true;refreshSheet()}
-  else if(a==='cancel-edit'){S.editing=false;refreshSheet()}
+  else if(a==='edit'){S.editing=true;S.editDraft=null;S.mergeTel=null;refreshSheet()}
+  else if(a==='cancel-edit'){S.editing=false;S.editDraft=null;S.mergeTel=null;refreshSheet()}
+  else if(a==='merge-yes')mergeContact();
+  else if(a==='merge-no'){S.mergeTel=null;refreshSheet()}
   else if(a==='copytel'){copy(fmtTel(S.tel))}
   else if(a==='fav'){var cc=db.contatos.find(function(x){return x.tel===S.tel});if(cc){if(cc.fav)delete cc.fav;else cc.fav=true;commit()}}
   else if(a==='add-papel'){S.adding=true;refreshSheet()}
@@ -1066,11 +1076,27 @@ function saveNew(){
 function saveEdit(){
   var tel=normTel($('#e-tel').value);
   if(!tel)return showErr('#errEdit','Telefone inválido.');
-  if(tel!==S.tel&&db.contatos.some(function(c){return c.tel===tel}))return showErr('#errEdit','Esse número já pertence a outro contato.');
+  if(tel!==S.tel&&db.contatos.some(function(c){return c.tel===tel})){
+    S.editDraft={nome:$('#e-nome').value,emp:$('#e-emp').value,tel:$('#e-tel').value};S.mergeTel=tel;refreshSheet();
+    var mb=sheet.querySelector('[data-act="merge-yes"]');if(mb)mb.scrollIntoView({block:'center'});return;
+  }
   var c=db.contatos.find(function(x){return x.tel===S.tel});
   c.nome=$('#e-nome').value.trim();c.empresa=$('#e-emp').value.trim();
   if(tel!==S.tel){db.papeis.forEach(function(p){if(p.tel===S.tel)p.tel=tel});c.tel=tel;S.tel=tel}
-  S.editing=false;commit();
+  S.editing=false;S.editDraft=null;S.mergeTel=null;commit();
+}
+function mergeContact(){
+  var oldTel=S.tel,newTel=S.mergeTel,dr=S.editDraft||{};
+  var o=db.contatos.find(function(x){return x.tel===oldTel}),t=db.contatos.find(function(x){return x.tel===newTel});
+  if(!o||!t||oldTel===newTel){S.mergeTel=null;S.editDraft=null;refreshSheet();return}
+  var nome=(dr.nome||'').trim(),emp=(dr.emp||'').trim();
+  t.nome=nome||o.nome||t.nome;t.empresa=emp||o.empresa||t.empresa;
+  if(o.fav)t.fav=true;
+  db.papeis.forEach(function(p){if(p.tel===oldTel)p.tel=newTel});
+  var seen={},out=[];
+  db.papeis.forEach(function(p){var k=[p.tel,p.obra,p.categoria,p.servico].join('|');if(seen[k]){seen[k].hist=(seen[k].hist||[]).concat(p.hist||[])}else{seen[k]=p;out.push(p)}});
+  db.papeis=out;db.contatos=db.contatos.filter(function(x){return x.tel!==oldTel});
+  S.tel=newTel;S.editing=false;S.editDraft=null;S.mergeTel=null;commit();toast('Número trocado em todas as obras e funções');
 }
 function saveGh(){
   var o=$('#g-owner').value.trim(),r=$('#g-repo').value.trim(),t=$('#g-token').value.trim()||(gh&&gh.token)||'';
