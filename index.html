@@ -1,4 +1,5 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.ac-tools{display:flex;justify-content:flex-end;margin:0 0 6px}.ac-all{background:none;border:0;color:var(--mut,#8298b5);font:inherit;font-size:13px;padding:6px 4px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}.ac-all:active{opacity:.6}
+</style></head><body>
 <style>:root{color-scheme:light;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}
 body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 #toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))!important}
@@ -519,7 +520,7 @@ function exampleDb(){
 function loadLocal(){var r=lsGet(KEY);if(r){try{var d=JSON.parse(r);if(d&&d.papeis&&d.categorias)return d}catch(e){}}return null}
 var db=loadLocal()||exampleDb();
 (function(){var c=function(a,b){return String(a).localeCompare(String(b),'pt-BR',{sensitivity:'base'})};db.categorias.sort(function(a,b){return c(a.nome,b.nome)});db.servicos.sort(c)})();
-var ui={favs:false,q:'',obra:lsGet(OBRAKEY)||'',fcat:'',fserv:'',open:null,closed:{}};
+var ui={favs:false,q:'',obra:lsGet(OBRAKEY)||'',fcat:'',fserv:'',open:null,all:false,closed:{}};
 function realObra(){return (ui.obra&&ui.obra!=='__none')?ui.obra:''}
 function setObra(v){ui.obra=v;lsSet(OBRAKEY,v);render()}
 var S={type:null};
@@ -666,11 +667,14 @@ function catSection(c,items,open,q){
 function renderList(){
   var P=filtered(),q=ui.q.trim()!=='',narrow=q||ui.obra||ui.fcat||ui.fserv,html='';
   if(ui.open&&!db.categorias.some(function(c){return c.id===ui.open}))ui.open=null;
+  var nCat=0;
   db.categorias.forEach(function(c){
     var items=P.filter(function(p){return p.categoria===c.id});
     if(!items.length)return;
-    html+=catSection(c,items,q?true:ui.open===c.id,q);
+    nCat++;
+    html+=catSection(c,items,(q||ui.all)?true:ui.open===c.id,q);
   });
+  if(nCat>1&&!q)html='<div class="ac-tools"><button type="button" class="ac-all" data-act="toggle-all">'+(ui.all?'Fechar todas':'Abrir todas')+'</button></div>'+html;
   if(!db.papeis.length)html+='<p class="empty-all">Sua agenda está vazia. Toque em “+ Novo contato” para começar.</p>';
   else if(narrow&&!P.length)html+='<p class="empty-all">'+((ui.obra&&!q&&!ui.fcat&&!ui.fserv)?'Nenhum contato nesta obra ainda. Toque em “+ Novo contato” para adicionar.':'Nada encontrado com esses filtros.')+'</p>';
   acc.innerHTML=html;
@@ -925,8 +929,10 @@ document.addEventListener('keydown',function(e){
 acc.addEventListener('click',function(e){
   var el=e.target.closest('[data-act]');if(!el)return;
   var a=el.dataset.act;
-  if(a==='cat'){
-    ui.open=ui.open===el.dataset.cat?null:el.dataset.cat;renderList();
+  if(a==='toggle-all'){
+    ui.all=!ui.all;if(!ui.all)ui.open=null;renderList();
+  }else if(a==='cat'){
+    ui.open=(ui.all||ui.open!==el.dataset.cat)?el.dataset.cat:null;ui.all=false;renderList();
     var hd=acc.querySelector('.ac.open .ac-h');if(ui.open&&hd)hd.scrollIntoView({block:'nearest'});
   }else if(a==='sv'){ui.closed[el.dataset.key]=!ui.closed[el.dataset.key];renderList()}
   else if(a==='row'){var p=db.papeis.find(function(x){return x.id===el.dataset.id});if(p)openContact(p.tel)}
@@ -941,7 +947,7 @@ $('#fObra').addEventListener('change',function(e){
   if(e.target.value==='__newobra'){e.target.value=ui.obra;S={type:'obra'};openSheet();return}
   setObra(e.target.value);
 });
-$('#fCat').addEventListener('change',function(e){ui.fcat=e.target.value;if(ui.fcat)ui.open=ui.fcat;renderList()});
+$('#fCat').addEventListener('change',function(e){ui.fcat=e.target.value;if(ui.fcat){ui.open=ui.fcat;ui.all=false}renderList()});
 $('#fServ').addEventListener('change',function(e){ui.fserv=e.target.value;renderList()});
 
 function syncDock(){$('#dkHome').setAttribute('aria-pressed',String(!ui.favs));$('#dkFav').setAttribute('aria-pressed',String(!!ui.favs));$('#btnSettings').classList.toggle('err',syncState==='erro')}
