@@ -480,7 +480,7 @@ document.addEventListener('DOMContentLoaded',function(){
 <nav class="dock" aria-label="Navegação"><div class="dock-in">
   <button class="dk" id="dkHome" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Início</button>
   <button class="dk" id="dkFav" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>Favoritos</button>
-  <button class="dk" id="btnRate" aria-label="Qualificar empreiteiros"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="6"/><path d="M9 14.5L8 21l4-2.2 4 2.2-1-6.5"/><path d="M9.6 9l1.8 1.8L14.6 7.4"/></svg>Qualificar</button>
+  <button class="dk" id="btnRate" aria-label="Qualificar serviços"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="6"/><path d="M9 14.5L8 21l4-2.2 4 2.2-1-6.5"/><path d="M9.6 9l1.8 1.8L14.6 7.4"/></svg>Qualificar</button>
   <button class="dk" id="btnTheme" aria-label="Alternar tema claro e escuro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>Tema</button>
   <button class="dk" id="btnSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Ajustes</button>
 </div></nav>
@@ -792,31 +792,39 @@ function readPapelFields(){
   return {obra:obra,cats:cats,catNews:catNews,catMissing:!cats.length&&!catNews.length,servs:servs};
 }
 function sheetRate(){
-  var ids=db.categorias.filter(function(c){return /empreiteir/i.test(c.nome)}).map(function(c){return c.id}),todos=!ids.length;
-  var ob=S.rateObra||'';
+  var empIds=db.categorias.filter(function(c){return /empreiteir/i.test(c.nome)}).map(function(c){return c.id});
+  var ob=S.rateObra||'',ct=S.rateCat||(empIds.length?'__emp':'__all');
   var list=db.papeis.filter(function(p){
-    if(!todos&&ids.indexOf(p.categoria)<0)return false;
+    if(ct==='__emp'){if(empIds.indexOf(p.categoria)<0)return false}
+    else if(ct!=='__all'&&p.categoria!==ct)return false;
     if(ob)return ob==='__none'?!p.obra:p.obra===ob;
     return true;
   });
-  var rated=list.filter(function(p){return p.nota}).length;
-  var opts='<option value="">Todas as obras</option>'+db.obras.map(function(o){return '<option value="'+esc(o.id)+'"'+(o.id===ob?' selected':'')+'>'+esc(o.nome)+'</option>'}).join('')+(db.papeis.some(function(p){return !p.obra})?'<option value="__none"'+(ob==='__none'?' selected':'')+'>Sem obra</option>':'');
-  var h='<div class="sh-head"><div><h2>Qualificar empreiteiros</h2><p class="mut">Toque nas estrelas de cada serviço. Toque na mesma estrela de novo para remover.</p></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>'
-   +'<div class="field"><label for="r-obra">Obra</label><select id="r-obra">'+opts+'</select></div>';
-  if(!list.length)return h+'<p class="note">Nenhum empreiteiro '+(ob?'nesta obra':'cadastrado')+' ainda.</p><div class="row2"><button class="btn" data-act="close">Fechar</button></div>';
-  h+='<p class="note"><b>'+rated+' de '+list.length+'</b> '+(list.length===1?'avaliado':'avaliados')+(todos?' (não encontrei o setor “Empreiteiro”, por isso aparecem todos os setores)':'')+'</p>';
-  var groups=[];
-  db.obras.forEach(function(o){groups.push([o.id,o.nome])});groups.push(['','Sem obra']);
-  groups.forEach(function(g){
-    var gp=list.filter(function(p){return (p.obra||'')===g[0]});
-    if(!gp.length)return;
-    gp.sort(function(a,b){return (cOf(a.tel).nome||'').localeCompare(cOf(b.tel).nome||'','pt-BR')});
-    if(!ob)h+='<div class="rt-h"><strong>'+esc(g[1])+'</strong><span class="mut">'+gp.filter(function(p){return p.nota}).length+' de '+gp.length+'</span></div>';
-    h+='<ul class="rts">'+gp.map(function(p){
-      var c=cOf(p.tel),sub=[c.empresa,p.servico].filter(Boolean).map(esc).join(' · ');
-      return '<li class="rt-row"><div class="rt-who"><b>'+esc(c.nome||fmtTel(p.tel))+'</b><span>'+sub+'</span></div><span class="stars" role="group" aria-label="Qualidade">'+[1,2,3,4,5].map(function(n){return '<button type="button" class="star'+((p.nota||0)>=n?' on':'')+'" data-act="rate" data-id="'+p.id+'" data-v="'+n+'" aria-label="'+n+(n===1?' estrela':' estrelas')+'">'+((p.nota||0)>=n?'★':'☆')+'</button>'}).join('')+'</span></li>';
-    }).join('')+'</ul>';
-  });
+  var pend=list.filter(function(p){return !p.nota}),done=list.filter(function(p){return p.nota});
+  var oOpts='<option value="">Todas as obras</option>'+db.obras.map(function(o){return '<option value="'+esc(o.id)+'"'+(o.id===ob?' selected':'')+'>'+esc(o.nome)+'</option>'}).join('')+(db.papeis.some(function(p){return !p.obra})?'<option value="__none"'+(ob==='__none'?' selected':'')+'>Sem obra</option>':'');
+  var cOpts=(empIds.length?'<option value="__emp"'+(ct==='__emp'?' selected':'')+'>Só empreiteiros</option>':'')+'<option value="__all"'+(ct==='__all'?' selected':'')+'>Todos os setores</option>'+db.categorias.map(function(c){return '<option value="'+esc(c.id)+'"'+(c.id===ct?' selected':'')+'>'+esc(c.nome)+'</option>'}).join('');
+  var h='<div class="sh-head"><div><h2>Qualificar serviços</h2><p class="mut">Toque nas estrelas para avaliar. Quem já foi avaliado passa para a lista de baixo, e dá para corrigir a nota por lá.</p></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>'
+   +'<div class="field"><label for="r-obra">Obra</label><select id="r-obra">'+oOpts+'</select></div>'
+   +'<div class="field"><label for="r-cat">Setor</label><select id="r-cat">'+cOpts+'</select></div>';
+  if(!list.length)return h+'<p class="note">Nenhum serviço '+(ob?'nesta obra':'')+(ct==='__emp'?' de empreiteiro':'')+' ainda. Se o contato foi cadastrado em outro setor, escolha “Todos os setores” acima.</p><div class="row2"><button class="btn" data-act="close">Fechar</button></div>';
+  function row(p){
+    var c=cOf(p.tel),sub=[c.empresa,p.servico,(ct!=='__emp'&&ct!==p.categoria)?catOf(p.categoria).nome:''].filter(Boolean).map(esc).join(' · ');
+    return '<li class="rt-row"><div class="rt-who"><b>'+esc(c.nome||fmtTel(p.tel))+'</b><span>'+sub+'</span></div><span class="stars" role="group" aria-label="Qualidade">'+[1,2,3,4,5].map(function(n){return '<button type="button" class="star'+((p.nota||0)>=n?' on':'')+'" data-act="rate" data-id="'+p.id+'" data-v="'+n+'" aria-label="'+n+(n===1?' estrela':' estrelas')+'">'+((p.nota||0)>=n?'★':'☆')+'</button>'}).join('')+'</span></li>';
+  }
+  function block(titulo,arr,vazio){
+    var out='<h3>'+titulo+' ('+arr.length+')</h3>';
+    if(!arr.length)return out+'<p class="note">'+vazio+'</p>';
+    var groups=db.obras.map(function(o){return [o.id,o.nome]});groups.push(['','Sem obra']);
+    groups.forEach(function(g){
+      var gp=arr.filter(function(p){return (p.obra||'')===g[0]});
+      if(!gp.length)return;
+      gp.sort(function(a,b){return (cOf(a.tel).nome||'').localeCompare(cOf(b.tel).nome||'','pt-BR')});
+      if(!ob)out+='<div class="rt-h"><strong>'+esc(g[1])+'</strong></div>';
+      out+='<ul class="rts">'+gp.map(row).join('')+'</ul>';
+    });
+    return out;
+  }
+  h+=block('Sem avaliação',pend,'Todos avaliados.')+block('Avaliados',done,'Ainda ninguém foi avaliado.');
   return h+'<div class="row2"><button class="btn primary" data-act="close">Concluir</button></div>';
 }
 function sheetObra(){
@@ -990,7 +998,7 @@ $('#dkFav').addEventListener('click',function(){ui.favs=!ui.favs;render();syncDo
 $('#btnAdd').addEventListener('click',function(){S={type:'new'};openSheet()});
 $('#btnSettings').addEventListener('click',function(){S={type:'settings'};openSheet()});
 $('#btnRate').addEventListener('click',function(){S={type:'rate',rateObra:ui.obra||''};openSheet()});
-sheet.addEventListener('change',function(e){if(e.target&&e.target.id==='r-obra'&&S.type==='rate'){S.rateObra=e.target.value;refreshSheet()}});
+sheet.addEventListener('change',function(e){if(!e.target||S.type!=='rate')return;if(e.target.id==='r-obra'){S.rateObra=e.target.value;refreshSheet()}else if(e.target.id==='r-cat'){S.rateCat=e.target.value;refreshSheet()}});
 $('#btnTheme').addEventListener('click',function(){
   var cur=document.documentElement.getAttribute('data-theme');
   var dark=cur?cur==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
