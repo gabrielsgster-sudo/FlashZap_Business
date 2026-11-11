@@ -803,7 +803,7 @@ function sheetRate(){
   });
   var pend=list.filter(function(p){return !p.nota}),done=list.filter(function(p){return p.nota});
   var oOpts='<option value="">Todas as obras</option>'+db.obras.map(function(o){return '<option value="'+esc(o.id)+'"'+(o.id===ob?' selected':'')+'>'+esc(o.nome)+'</option>'}).join('')+(db.papeis.some(function(p){return !p.obra})?'<option value="__none"'+(ob==='__none'?' selected':'')+'>Sem obra</option>':'');
-  var cOpts=(empIds.length?'<option value="__emp"'+(ct==='__emp'?' selected':'')+'>Só empreiteiros</option>':'')+'<option value="__all"'+(ct==='__all'?' selected':'')+'>Todos os setores</option>'+db.categorias.map(function(c){return '<option value="'+esc(c.id)+'"'+(c.id===ct?' selected':'')+'>'+esc(c.nome)+'</option>'}).join('');
+  var cOpts='<option value="__all"'+(ct==='__all'?' selected':'')+'>Todos os setores</option>'+(empIds.length?'<option value="__emp"'+(ct==='__emp'?' selected':'')+'>Só empreiteiros</option>':'')+db.categorias.map(function(c){return '<option value="'+esc(c.id)+'"'+(c.id===ct?' selected':'')+'>'+esc(c.nome)+'</option>'}).join('');
   var h='<div class="sh-head"><div><h2>Qualificar serviços</h2><p class="mut">Toque nas estrelas para avaliar. Quem já foi avaliado passa para a lista de baixo, e dá para corrigir a nota por lá.</p></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>'
    +'<div class="field"><label for="r-obra">Obra</label><select id="r-obra">'+oOpts+'</select></div>'
    +'<div class="field"><label for="r-cat">Setor</label><select id="r-cat">'+cOpts+'</select></div>';
