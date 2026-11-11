@@ -1,4 +1,5 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.ac-tools{display:flex;justify-content:flex-end;margin:0 0 6px}.ac-all{background:none;border:0;color:var(--mut,#8298b5);font:inherit;font-size:13px;padding:6px 4px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}.ac-all:active{opacity:.6}
+.stars{display:inline-flex;gap:0}.star{background:none;border:0;padding:3px 5px;font-size:26px;line-height:1;color:var(--mut,#8298b5);cursor:pointer}.star.on{color:#E8A800}.nt{font-style:normal;color:#B07F00;font-weight:600}
 </style></head><body>
 <style>:root{color-scheme:light;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}
 body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
@@ -468,6 +469,7 @@ document.addEventListener('DOMContentLoaded',function(){
     <select id="fObra" aria-label="Filtrar por obra"></select>
     <select id="fCat" aria-label="Filtrar por setor"></select>
     <select id="fServ" aria-label="Filtrar por função"></select>
+    <select id="fNota" aria-label="Filtrar por qualidade"><option value="0">Qualidade: todas</option><option value="5">5 estrelas</option><option value="4">4 estrelas ou mais</option><option value="3">3 estrelas ou mais</option></select>
     <button class="btn primary" id="btnAdd">+ Novo contato</button>
   </section>
   <main class="acc" id="acc" aria-label="Contatos por setor"></main>
@@ -520,7 +522,7 @@ function exampleDb(){
 function loadLocal(){var r=lsGet(KEY);if(r){try{var d=JSON.parse(r);if(d&&d.papeis&&d.categorias)return d}catch(e){}}return null}
 var db=loadLocal()||exampleDb();
 (function(){var c=function(a,b){return String(a).localeCompare(String(b),'pt-BR',{sensitivity:'base'})};db.categorias.sort(function(a,b){return c(a.nome,b.nome)});db.servicos.sort(c)})();
-var ui={favs:false,q:'',obra:lsGet(OBRAKEY)||'',fcat:'',fserv:'',opens:{},closed:{}};
+var ui={favs:false,q:'',obra:lsGet(OBRAKEY)||'',fcat:'',fserv:'',fnota:0,opens:{},closed:{}};
 function realObra(){return (ui.obra&&ui.obra!=='__none')?ui.obra:''}
 function setObra(v){ui.obra=v;lsSet(OBRAKEY,v);render()}
 var S={type:null};
@@ -626,6 +628,7 @@ function filtered(){
     if(ui.favs&&!cOf(p.tel).fav)return false;
     if(ui.fcat&&p.categoria!==ui.fcat)return false;
     if(ui.fserv&&p.servico!==ui.fserv)return false;
+    if(ui.fnota&&!((p.nota||0)>=ui.fnota))return false;
     if(q){
       var c=cOf(p.tel);
       var hay=[c.nome,c.empresa,p.servico,obraName(p.obra),catOf(p.categoria).nome].join(' ').toLowerCase();
@@ -642,8 +645,8 @@ var acc=$('#acc');
 var CHEV='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 var WAICON='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 20.5l1.7-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>';
 function rowHtml(p){
-  var c=cOf(p.tel),nome=c.nome||fmtTel(p.tel),sub=[c.empresa,(p.obra&&!ui.obra)?obraName(p.obra):''].filter(Boolean).join(' · ');
-  return '<li class="rw" data-id="'+p.id+'"><button class="rw-main" data-act="row" data-id="'+p.id+'"><b>'+(c.fav?'<span class="st">★</span>':'')+esc(nome)+'</b>'+(sub?'<span>'+esc(sub)+'</span>':'')+'</button><a class="wa" href="https://wa.me/'+p.tel+'" target="_blank" rel="noopener" aria-label="Abrir conversa de '+esc(nome)+' no WhatsApp">'+WAICON+'WhatsApp</a></li>';
+  var c=cOf(p.tel),nome=c.nome||fmtTel(p.tel),sub=[c.empresa,(p.obra&&!ui.obra)?obraName(p.obra):''].filter(Boolean).map(esc).join(' · '),nt=p.nota?'<i class="nt" title="Qualidade">★ '+p.nota+'</i>':'';
+  return '<li class="rw" data-id="'+p.id+'"><button class="rw-main" data-act="row" data-id="'+p.id+'"><b>'+(c.fav?'<span class="st">★</span>':'')+esc(nome)+'</b>'+((sub||nt)?'<span>'+sub+(sub&&nt?' · ':'')+nt+'</span>':'')+'</button><a class="wa" href="https://wa.me/'+p.tel+'" target="_blank" rel="noopener" aria-label="Abrir conversa de '+esc(nome)+' no WhatsApp">'+WAICON+'WhatsApp</a></li>';
 }
 function catSection(c,items,open,q){
   var h='<section class="ac'+(open?' open':'')+'" style="--h:'+c.h+'"><button class="ac-h" data-act="cat" data-cat="'+c.id+'" aria-expanded="'+open+'"><span class="bar"></span><span class="nm">'+esc(c.nome)+'</span><em>'+items.length+'</em>'+CHEV+'</button>';
@@ -665,7 +668,7 @@ function catSection(c,items,open,q){
   return h+'</section>';
 }
 function renderList(){
-  var P=filtered(),q=ui.q.trim()!=='',narrow=q||ui.obra||ui.fcat||ui.fserv,html='';
+  var P=filtered(),q=ui.q.trim()!=='',narrow=q||ui.obra||ui.fcat||ui.fserv||ui.fnota,html='';
   Object.keys(ui.opens).forEach(function(k){if(!db.categorias.some(function(c){return c.id===k}))delete ui.opens[k]});
   var nCat=0;
   db.categorias.forEach(function(c){
@@ -676,7 +679,7 @@ function renderList(){
   });
   if(!q&&Object.keys(ui.opens).length>1)html='<div class="ac-tools"><button type="button" class="ac-all" data-act="close-all">Fechar todas</button></div>'+html;
   if(!db.papeis.length)html+='<p class="empty-all">Sua agenda está vazia. Toque em “+ Novo contato” para começar.</p>';
-  else if(narrow&&!P.length)html+='<p class="empty-all">'+((ui.obra&&!q&&!ui.fcat&&!ui.fserv)?'Nenhum contato nesta obra ainda. Toque em “+ Novo contato” para adicionar.':'Nada encontrado com esses filtros.')+'</p>';
+  else if(narrow&&!P.length)html+='<p class="empty-all">'+((ui.obra&&!q&&!ui.fcat&&!ui.fserv&&!ui.fnota)?'Nenhum contato nesta obra ainda. Toque em “+ Novo contato” para adicionar.':'Nada encontrado com esses filtros.')+'</p>';
   acc.innerHTML=html;
 }
 var f0=db.categorias.find(function(c){return db.papeis.some(function(p){return p.categoria===c.id})});
@@ -715,7 +718,7 @@ function movePapel(id,catId){
   if(!p||p.categoria===catId)return;
   var nome=cOf(p.tel).nome||fmtTel(p.tel),entry={de:p.categoria,para:catId,em:now()};
   var dup=db.papeis.find(function(x){return x!==p&&x.tel===p.tel&&x.obra===p.obra&&x.servico===p.servico&&x.categoria===catId});
-  if(dup){dup.hist=(dup.hist||[]).concat(p.hist||[],[entry]);db.papeis=db.papeis.filter(function(x){return x!==p})}
+  if(dup){if(p.nota&&!dup.nota)dup.nota=p.nota;dup.hist=(dup.hist||[]).concat(p.hist||[],[entry]);db.papeis=db.papeis.filter(function(x){return x!==p})}
   else{p.hist=(p.hist||[]).concat([entry]);p.categoria=catId}
   ui.opens[catId]=true;commit();toast(nome+' → '+catOf(catId).nome);
 }
@@ -727,7 +730,7 @@ function setServico(id,sv){
   var p=db.papeis.find(function(x){return x.id===id});
   if(!p||p.servico===sv){refreshSheet();return}
   var dup=db.papeis.find(function(x){return x!==p&&x.tel===p.tel&&x.obra===p.obra&&x.servico===sv&&x.categoria===p.categoria});
-  if(dup){dup.hist=(dup.hist||[]).concat(p.hist||[]);db.papeis=db.papeis.filter(function(x){return x!==p})}
+  if(dup){if(p.nota&&!dup.nota)dup.nota=p.nota;dup.hist=(dup.hist||[]).concat(p.hist||[]);db.papeis=db.papeis.filter(function(x){return x!==p})}
   else p.servico=sv;
   commit();toast('Função: '+sv);
 }
@@ -856,7 +859,7 @@ function sheetContact(){
       +'<div class="mv"><small>Setor</small>'
       +(S.editCat!==p.id?'<span class="chipbtn on" data-h style="--h:'+cat.h+';cursor:default">'+esc(cat.nome)+'</span><button class="btn sm" data-act="cat-edit" data-id="'+p.id+'">Mudar setor</button>':db.categorias.map(function(k){return '<button class="chipbtn'+(k.id===p.categoria?' on':'')+'" data-h data-act="move" data-id="'+p.id+'" data-cat="'+k.id+'" style="--h:'+k.h+'">'+esc(k.nome)+'</button>'}).join('')
       +(S.newCatFor===p.id?'<span class="confirm" style="flex:1 1 100%"><input id="mv-new" placeholder="Nome do novo setor" autocomplete="off" style="flex:1;min-width:0;height:36px;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:0 10px;font-size:16px"><button class="btn sm primary" data-act="move-new-ok" data-id="'+p.id+'">Criar e mover</button><button class="btn sm" data-act="move-new-no">Cancelar</button></span>':'<button class="chipbtn novo" data-act="move-new" data-id="'+p.id+'">+ Novo setor</button>'))
-      +'</div><div class="pp-foot"><span>'+(last?'Movido de '+esc(catOf(last.de).nome)+' para '+esc(catOf(last.para).nome)+' em '+fmtDate(last.em):'Em '+esc(cat.nome)+' desde o cadastro')+'</span>'
+      +'</div><div class="mv"><small>Qualidade</small><span class="stars" role="group" aria-label="Qualidade do serviço">'+[1,2,3,4,5].map(function(n){return '<button type="button" class="star'+((p.nota||0)>=n?' on':'')+'" data-act="rate" data-id="'+p.id+'" data-v="'+n+'" aria-label="'+n+(n===1?' estrela':' estrelas')+'">'+((p.nota||0)>=n?'★':'☆')+'</button>'}).join('')+'</span>'+(p.nota?'<small>'+p.nota+' de 5</small>':'<small>sem avaliação</small>')+'</div><div class="pp-foot"><span>'+(last?'Movido de '+esc(catOf(last.de).nome)+' para '+esc(catOf(last.para).nome)+' em '+fmtDate(last.em):'Em '+esc(cat.nome)+' desde o cadastro')+'</span>'
       +(S.confirm==='p:'+p.id?'<span class="confirm">Remover? <button class="btn sm danger" data-act="rm-papel-yes" data-id="'+p.id+'">Remover</button><button class="btn sm" data-act="rm-no">Não</button></span>':'<button data-act="rm-papel" data-id="'+p.id+'">Remover</button>')
       +'</div></li>';
   });
@@ -949,6 +952,7 @@ $('#fObra').addEventListener('change',function(e){
 });
 $('#fCat').addEventListener('change',function(e){ui.fcat=e.target.value;if(ui.fcat)ui.opens[ui.fcat]=true;renderList()});
 $('#fServ').addEventListener('change',function(e){ui.fserv=e.target.value;renderList()});
+$('#fNota').addEventListener('change',function(e){ui.fnota=+e.target.value||0;renderList()});
 
 function syncDock(){$('#dkHome').setAttribute('aria-pressed',String(!ui.favs));$('#dkFav').setAttribute('aria-pressed',String(!!ui.favs));$('#btnSettings').classList.toggle('err',syncState==='erro')}
 $('#dkHome').addEventListener('click',function(){ui.favs=false;render();syncDock();window.scrollTo({top:0,behavior:'smooth'})});
@@ -1013,6 +1017,7 @@ sheet.addEventListener('click',function(e){
   else if(a==='serv-new'){S.newServFor=id;refreshSheet();var si=$('#sv-new');if(si)si.focus()}
   else if(a==='serv-new-no'){S.newServFor=null;refreshSheet()}
   else if(a==='serv-new-ok')servNew(id);
+  else if(a==='rate'){var rp=db.papeis.find(function(x){return x.id===id});if(rp){var nv=+el.dataset.v;if(rp.nota===nv)delete rp.nota;else rp.nota=nv;commit();refreshSheet()}}
   else if(a==='serv-set'){S.editServ=null;S.newServFor=null;setServico(id,el.dataset.v)}
   else if(a==='move-new'){S.newCatFor=id;refreshSheet();var mi=$('#mv-new');if(mi)mi.focus()}
   else if(a==='move-new-no'){S.newCatFor=null;refreshSheet()}
@@ -1112,7 +1117,7 @@ function mergeContact(){
   if(o.fav)t.fav=true;
   db.papeis.forEach(function(p){if(p.tel===oldTel)p.tel=newTel});
   var seen={},out=[];
-  db.papeis.forEach(function(p){var k=[p.tel,p.obra,p.categoria,p.servico].join('|');if(seen[k]){seen[k].hist=(seen[k].hist||[]).concat(p.hist||[])}else{seen[k]=p;out.push(p)}});
+  db.papeis.forEach(function(p){var k=[p.tel,p.obra,p.categoria,p.servico].join('|');if(seen[k]){if(p.nota&&!seen[k].nota)seen[k].nota=p.nota;seen[k].hist=(seen[k].hist||[]).concat(p.hist||[])}else{seen[k]=p;out.push(p)}});
   db.papeis=out;db.contatos=db.contatos.filter(function(x){return x.tel!==oldTel});
   S.tel=newTel;S.editing=false;S.editDraft=null;S.mergeTel=null;commit();toast('Número trocado em todas as obras e funções');
 }
