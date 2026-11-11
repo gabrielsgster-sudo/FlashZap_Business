@@ -954,8 +954,11 @@ function sheetSettings(){
     var ob=db.obras.find(function(x){return x.id===S.confirmObra});
     if(ob){
       var tt={};db.papeis.forEach(function(p){if(p.obra===ob.id)tt[p.tel]=1});
-      h+='<div class="pp" style="margin-top:10px;border-color:var(--danger)"><strong>Excluir “'+esc(ob.nome)+'”?</strong><span class="mut">Ela tem '+usage('obra',ob.id)+' serviço(s) de '+Object.keys(tt).length+' contato(s). O que fazer com eles?</span>'
-       +'<div class="row2" style="margin-top:0"><button class="btn danger" data-act="obra-del-all">Excluir a obra e os serviços dela</button><button class="btn" data-act="obra-del-keep">Excluir a obra e manter os contatos em “Sem obra”</button><button class="btn" data-act="obra-del-no">Cancelar</button></div></div>';
+      var nUso=usage('obra',ob.id);
+      h+='<div class="pp" style="margin-top:10px;border-color:var(--danger)"><strong>Excluir “'+esc(ob.nome)+'”?</strong>'
+       +'<span style="color:var(--danger);font-weight:600">Isso apagará os contatos e as avaliações desta obra. Não dá para desfazer.</span>'
+       +(nUso?'<span class="mut">Ela tem '+nUso+' serviço(s) de '+Object.keys(tt).length+' contato(s).</span>':'')
+       +'<div class="row2" style="margin-top:0"><button class="btn danger" data-act="obra-del-all">'+(nUso?'Excluir a obra, os contatos e as avaliações':'Excluir a obra')+'</button>'+'<button class="btn" data-act="obra-del-no">Cancelar</button></div></div>';
     }
   }
   h+='<h3>Backup</h3><div class="row2" style="margin-top:0"><button class="btn" data-act="export">Baixar JSON</button><button class="btn" data-act="copyjson">Copiar JSON</button><button class="btn" data-act="import">Importar JSON</button></div><input type="file" id="imp" accept="application/json,.json" hidden>';
@@ -1101,7 +1104,6 @@ sheet.addEventListener('click',function(e){
     S.confirmList=null;commit();toast(cl.kind==='cat'?'Setor excluído':'Função excluída')}
   else if(a==='open-lists'){S={type:'settings'};openSheet();setTimeout(function(){var h=sheet.querySelector('#sec-cat');if(h)h.scrollIntoView()},50)}
   else if(a==='obra-del-all')removeObra(S.confirmObra,'all');
-  else if(a==='obra-del-keep')removeObra(S.confirmObra,'keep');
   else if(a==='obra-del-no'){S.confirmObra=null;refreshSheet()}
   else if(a==='export')exportJson();
   else if(a==='copyjson')copy(JSON.stringify(db,null,1));
@@ -1201,7 +1203,7 @@ function removeObra(id,mode){
   S.confirmObra=null;commit();toast('Obra excluída');
 }
 function delItem(kind,id){
-  if(kind==='obra'&&usage('obra',id)){S.confirmObra=id;refreshSheet();var cp=sheet.querySelector('.pp[style*="danger"]');if(cp)cp.scrollIntoView({block:'center'});return}
+  if(kind==='obra'){S.confirmObra=id;refreshSheet();var cp=sheet.querySelector('.pp[style*="danger"]');if(cp)cp.scrollIntoView({block:'center'});return}
   if(usage(kind,id)){S.confirmList={kind:kind,id:id};refreshSheet();var rs=sheet.querySelector('#rep-sel');if(rs)rs.scrollIntoView({block:'center'});else{var cp2=sheet.querySelector('.pp[style*="danger"]');if(cp2)cp2.scrollIntoView({block:'center'})}return}
   if(kind==='cat')db.categorias=db.categorias.filter(function(c){return c.id!==id});
   else if(kind==='serv')db.servicos=db.servicos.filter(function(s){return s!==id});
