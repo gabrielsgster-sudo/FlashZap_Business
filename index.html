@@ -2,6 +2,7 @@
 .stars{display:inline-flex;gap:0}.star{background:none;border:0;padding:3px 5px;font-size:26px;line-height:1;color:var(--mut,#8298b5);cursor:pointer}.star.on{color:#E8A800}.nt{font-style:normal;color:#B07F00;font-weight:600}
 .rts{list-style:none;margin:0;padding:0}.rt-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}.rt-who{min-width:0;display:flex;flex-direction:column}.rt-who span{color:var(--mut);font-size:13px}.rt-h{display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 2px}.rt-row .star{font-size:24px;padding:3px 4px}
 html body{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}html{scroll-padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+.sg-tools{display:flex;justify-content:flex-end;margin:0 0 2px}
 </style></head><body>
 <style>:root{color-scheme:light;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}
 body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
@@ -659,6 +660,7 @@ function catSection(c,items,open,q){
     else{
       var groups=groupBy(items,function(p){return p.servico}).sort(function(a,b){
         if(a.k===SEMCLASS)return 1;if(b.k===SEMCLASS)return -1;return a.k.localeCompare(b.k,'pt-BR')});
+      if(!q&&groups.length>1&&groups.some(function(g){return !ui.closed[c.id+'|'+g.k]}))h+='<div class="sg-tools"><button type="button" class="ac-all" data-act="sv-close-all">Fechar todas</button></div>';
       groups.forEach(function(g){
         var key=c.id+'|'+g.k,closed=!q&&ui.closed[key];
         h+='<div class="sg"><button class="sg-h" data-act="sv" data-key="'+esc(key)+'" aria-expanded="'+!closed+'">'+CHEV+'<span>'+esc(g.k)+'</span><small>'+g.items.length+'</small></button>';
@@ -976,6 +978,8 @@ acc.addEventListener('click',function(e){
   }else if(a==='cat'){
     var k=el.dataset.cat;if(ui.opens[k])delete ui.opens[k];else ui.opens[k]=true;renderList();
     if(ui.opens[k]){var hd=acc.querySelector('.ac-h[data-cat="'+k+'"]');if(hd)hd.scrollIntoView({block:'nearest'})}
+  }else if(a==='sv-close-all'){
+    var box=el.closest('.ac');if(box)box.querySelectorAll('.sg-h').forEach(function(b){ui.closed[b.dataset.key]=true});renderList();
   }else if(a==='sv'){ui.closed[el.dataset.key]=!ui.closed[el.dataset.key];renderList()}
   else if(a==='row'){var p=db.papeis.find(function(x){return x.id===el.dataset.id});if(p)openContact(p.tel)}
 });
