@@ -3,6 +3,7 @@
 .rts{list-style:none;margin:0;padding:0}.rt-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}.rt-who{min-width:0;display:flex;flex-direction:column}.rt-who span{color:var(--mut);font-size:13px}.rt-h{display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 2px}.rt-row .star{font-size:24px;padding:3px 4px}
 html body{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}html{scroll-padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 .sg-tools{display:flex;justify-content:flex-end;margin:0 0 2px}
+.rt-who{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:pointer;flex:1}.rt-who b{text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}.rt-title{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.rt-title .ac-all{text-transform:none;letter-spacing:0;font-weight:400}
 </style></head><body>
 <style>:root{color-scheme:light;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}
 body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
@@ -770,7 +771,9 @@ function addPapeis(tel,f){
 /* ---------- janelas ---------- */
 var overlay=$('#overlay'),sheet=$('#sheet');
 function openSheet(){overlay.hidden=false;document.body.classList.add('lock');refreshSheet(true)}
-function closeSheet(){overlay.hidden=true;document.body.classList.remove('lock');S={type:null}}
+function closeSheet(){
+  if(S.type==='contact'&&S.back){var bk=S.back;S={type:'rate',rateObra:bk.rateObra,rateCat:bk.rateCat};refreshSheet();sheet.scrollTop=bk.scroll||0;return}
+  overlay.hidden=true;document.body.classList.remove('lock');S={type:null}}
 function refreshSheet(focus){
   if(!S.type)return;
   var top=sheet.scrollTop;
@@ -810,13 +813,17 @@ function sheetRate(){
    +'<div class="field"><label for="r-obra">Obra</label><select id="r-obra">'+oOpts+'</select></div>'
    +'<div class="field"><label for="r-cat">Setor</label><select id="r-cat">'+cOpts+'</select></div>';
   if(!list.length)return h+'<p class="note">Nenhum serviço '+(ob?'nesta obra':'')+(ct==='__emp'?' de empreiteiro':'')+' ainda. Se o contato foi cadastrado em outro setor, escolha “Todos os setores” acima.</p><div class="row2"><button class="btn" data-act="close">Fechar</button></div>';
-  function row(p){
-    var c=cOf(p.tel),sub=[c.empresa,p.servico,(ct!=='__emp'&&ct!==p.categoria)?catOf(p.categoria).nome:''].filter(Boolean).map(esc).join(' · ');
-    return '<li class="rt-row"><div class="rt-who"><b>'+esc(c.nome||fmtTel(p.tel))+'</b><span>'+sub+'</span></div><span class="stars" role="group" aria-label="Qualidade">'+[1,2,3,4,5].map(function(n){return '<button type="button" class="star'+((p.nota||0)>=n?' on':'')+'" data-act="rate" data-id="'+p.id+'" data-v="'+n+'" aria-label="'+n+(n===1?' estrela':' estrelas')+'">'+((p.nota||0)>=n?'★':'☆')+'</button>'}).join('')+'</span></li>';
+  function row(p,showObra){
+    var c=cOf(p.tel),sub=[c.empresa,p.servico,(ct!=='__emp'&&ct!==p.categoria)?catOf(p.categoria).nome:'',showObra?(p.obra?obraName(p.obra):'Sem obra'):''].filter(Boolean).map(esc).join(' · ');
+    return '<li class="rt-row"><button type="button" class="rt-who" data-act="rate-open" data-tel="'+esc(p.tel)+'" aria-label="Abrir contato '+esc(c.nome||fmtTel(p.tel))+'"><b>'+esc(c.nome||fmtTel(p.tel))+'</b><span>'+sub+'</span></button><span class="stars" role="group" aria-label="Qualidade">'+[1,2,3,4,5].map(function(n){return '<button type="button" class="star'+((p.nota||0)>=n?' on':'')+'" data-act="rate" data-id="'+p.id+'" data-v="'+n+'" aria-label="'+n+(n===1?' estrela':' estrelas')+'">'+((p.nota||0)>=n?'★':'☆')+'</button>'}).join('')+'</span></li>';
   }
-  function block(titulo,arr,vazio){
-    var out='<h3>'+titulo+' ('+arr.length+')</h3>';
+  function block(titulo,arr,vazio,tools,flat){
+    var out='<h3'+(tools?' class="rt-title"':'')+'>'+(tools?'<span>'+titulo+' ('+arr.length+')</span>'+tools:titulo+' ('+arr.length+')')+'</h3>';
     if(!arr.length)return out+'<p class="note">'+vazio+'</p>';
+    if(flat){
+      var srt=arr.slice().sort(function(a,b){return (b.nota||0)-(a.nota||0)||(cOf(a.tel).nome||'').localeCompare(cOf(b.tel).nome||'','pt-BR')});
+      return out+'<ul class="rts">'+srt.map(function(p){return row(p,!ob)}).join('')+'</ul>';
+    }
     var groups=db.obras.map(function(o){return [o.id,o.nome]});groups.push(['','Sem obra']);
     groups.forEach(function(g){
       var gp=arr.filter(function(p){return (p.obra||'')===g[0]});
@@ -827,7 +834,8 @@ function sheetRate(){
     });
     return out;
   }
-  h+=block('Sem avaliação',pend,'Todos avaliados.')+block('Avaliados',done,'Ainda ninguém foi avaliado.');
+  var rs=ui.rateSort==='nota'?'nota':'az';
+  h+=block('Sem avaliação',pend,'Todos avaliados.')+block('Avaliados',done,'Ainda ninguém foi avaliado.',done.length>1?'<button type="button" class="ac-all" data-act="rate-sort">'+(rs==='nota'?'Ordem: maior nota':'Ordem: A–Z')+'</button>':'',rs==='nota');
   return h+'<div class="row2"><button class="btn primary" data-act="close">Concluir</button></div>';
 }
 function sheetObra(){
@@ -1005,7 +1013,7 @@ $('#dkHome').addEventListener('click',function(){ui.favs=false;render();syncDock
 $('#dkFav').addEventListener('click',function(){ui.favs=!ui.favs;render();syncDock();window.scrollTo({top:0,behavior:'smooth'});if(ui.favs&&!db.contatos.some(function(c){return c.fav}))toast('Nenhum favorito ainda. Abra um contato e toque em Favoritar.')});
 $('#btnAdd').addEventListener('click',function(){S={type:'new'};openSheet()});
 $('#btnSettings').addEventListener('click',function(){S={type:'settings'};openSheet()});
-$('#btnRate').addEventListener('click',function(){S={type:'rate',rateObra:ui.obra||''};openSheet()});
+$('#btnRate').addEventListener('click',function(){if(!ui.rateSort)ui.rateSort=lsGet('flashzap.ratesort')==='nota'?'nota':'az';S={type:'rate',rateObra:ui.obra||''};openSheet()});
 sheet.addEventListener('change',function(e){if(!e.target||S.type!=='rate')return;if(e.target.id==='r-obra'){S.rateObra=e.target.value;refreshSheet()}else if(e.target.id==='r-cat'){S.rateCat=e.target.value;refreshSheet()}});
 $('#btnTheme').addEventListener('click',function(){
   var cur=document.documentElement.getAttribute('data-theme');
@@ -1057,6 +1065,8 @@ sheet.addEventListener('click',function(e){
   var el=e.target.closest('[data-act]');if(!el)return;
   var a=el.dataset.act,id=el.dataset.id;
   if(a==='close')closeSheet();
+  else if(a==='rate-sort'){ui.rateSort=ui.rateSort==='nota'?'az':'nota';lsSet('flashzap.ratesort',ui.rateSort);refreshSheet()}
+  else if(a==='rate-open'){var bk={rateObra:S.rateObra,rateCat:S.rateCat,scroll:sheet.scrollTop};S={type:'contact',tel:el.dataset.tel,adding:false,editing:false,confirm:null,back:bk};refreshSheet();sheet.scrollTop=0}
   else if(a==='tog')el.setAttribute('aria-pressed',el.getAttribute('aria-pressed')==='true'?'false':'true');
   else if(a==='move'){S.editCat=null;S.newCatFor=null;movePapel(id,el.dataset.cat);refreshSheet()}
   else if(a==='cat-edit'){S.editCat=id;refreshSheet()}
