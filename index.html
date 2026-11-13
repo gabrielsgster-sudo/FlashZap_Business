@@ -692,7 +692,7 @@ function renderList(){
   acc.innerHTML=html;
 }
 var f0=db.categorias.find(function(c){return db.papeis.some(function(p){return p.categoria===c.id})});
-ui.opens=f0?(function(o){o[f0.id]=true;return o})({}):{};
+ui.opens={}; /* ao abrir ou atualizar, todos os setores começam recolhidos */
 
 /* ---------- cabeçalho, filtros e navegação ---------- */
 function fillSelect(sel,first,opts,val){
