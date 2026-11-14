@@ -196,6 +196,7 @@ body:not(.auth-lock) #auth{display:none}
 .linkbtn:disabled{opacity:.45;cursor:not-allowed;text-decoration:none}
 .auth-msg{margin:14px 0 0;padding:10px 12px;border-radius:6px;border:1px solid var(--danger);color:var(--danger);font-size:14px;text-align:center}
 .auth-msg.info{border-color:var(--line);color:var(--ink)}
+.auth-tip{margin:14px 0 0;padding:10px 12px;border-radius:6px;border:1px solid var(--line);font-size:13px;line-height:1.45;color:var(--ink)}
 .auth-demo{margin:14px 0 0;padding:10px 12px;border:1px dashed var(--mut);border-radius:6px;font-size:13px;text-align:center;color:var(--mut)}
 .auth-demo b{color:var(--ink);letter-spacing:.2em}
 .auth-or{display:flex;align-items:center;gap:10px;margin:18px 0 0;color:var(--mut);font-size:13px}
@@ -219,7 +220,8 @@ body:not(.auth-lock) #auth{display:none}
     </div>
     <div id="authStep2" hidden>
       <h2>Confira seu e-mail</h2>
-      <p class="auth-sub">Enviamos um link de acesso para <b id="authMail"></b>. Abra o e-mail <b>neste aparelho</b> e toque no link. Se não encontrar, olhe a caixa de spam.</p>
+      <p class="auth-sub">Enviamos um link de acesso para <b id="authMail"></b>. Abra o e-mail <b>neste aparelho</b> e toque no link.</p>
+      <div class="auth-tip"><b>Não chegou?</b> Veja o <b>lixo eletrônico / spam</b>. Usuários de Outlook e Hotmail: confira também a aba “Outros”. Se estiver lá, marque como <b>“Não é spam”</b> e toque no link. O e-mail pode levar até 2 minutos.</div>
       <div class="auth-links">
         <button class="linkbtn" id="authResend" type="button">Reenviar link</button>
         <button class="linkbtn" id="authBack" type="button">Trocar e-mail</button>
