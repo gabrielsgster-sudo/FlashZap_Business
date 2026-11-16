@@ -373,6 +373,8 @@ async function cloudStart(u){
   var ref=fbDb.collection('clientes').doc(u.uid),snap;
   try{snap=await ref.get()}catch(e){return (e&&e.code==='permission-denied')?'denied':'network'}
   cloudUser=u;cloudRef=ref;
+  window.fzPlano='';
+  try{var lic=await fbDb.collection('licencas').doc(String(u.email||'').toLowerCase()).get();if(lic.exists)window.fzPlano=String((lic.data()||{}).plano||'').toLowerCase()}catch(e){}
   var app=window.fzApp;
   var ow=lsGet('flashzap.owner');
   if(ow&&ow!==u.uid&&app)app.reset();
@@ -745,6 +747,14 @@ function setServico(id,sv){
   else p.servico=sv;
   commit();toast('Função: '+sv);
 }
+var LIMITE_UNICO=3,PLANO_URL='https://flashzapbusiness.com.br/';
+function maxObras(){return window.fzPlano==='unico'?LIMITE_UNICO:Infinity}
+function obraNova(nome){nome=(nome||'').trim();return !!nome&&!db.obras.some(function(o){return o.nome.toLowerCase()===nome.toLowerCase()})}
+function obrasReais(){return db.exemplo?0:db.obras.length}
+function limiteObra(nome){
+  if(!obraNova(nome)||obrasReais()<maxObras())return '';
+  return 'Seu plano inclui até '+LIMITE_UNICO+' obras. Apague uma obra que não usa mais ou conheça o plano anual, com obras ilimitadas.';
+}
 function ensureObra(nome){
   nome=(nome||'').trim();if(!nome)return '';
   var o=db.obras.find(function(o){return o.nome.toLowerCase()===nome.toLowerCase()});
@@ -850,6 +860,7 @@ function sheetObra(){
 }
 function saveObra(){
   var n=$('#o-nome').value.trim();if(!n)return showErr('#errObra','Digite o nome da obra.');
+  var lim=limiteObra(n);if(lim)return showLimite('#errObra',lim);
   var id=ensureObra(n);
   if(db.exemplo){/* mantém exemplos até o primeiro contato real */}
   closeSheet();ui.obra=id;lsSet(OBRAKEY,id);commit();toast('Obra pronta: '+n);
@@ -1104,6 +1115,7 @@ sheet.addEventListener('click',function(e){
   else if(a==='save-obra')saveObra();
   else if(a==='save-papel'){
     var f=readPapelFields();if(f.catMissing)return showErr('#errAdd','Escolha ou digite um setor.');if(!f.servs.length)return showErr('#errAdd','Escolha ou digite ao menos uma função.');
+    var limP=limiteObra(f.obra);if(limP)return showLimite('#errAdd',limP);
     addPapeis(S.tel,f);S.adding=false;commit();toast('Adicionado')}
   else if(a==='save-edit')saveEdit();
   else if(a==='save-gh')saveGh();
@@ -1142,6 +1154,7 @@ function exportJson(){
   }catch(e){toast('Não foi possível baixar aqui. Use “Copiar JSON”.')}
 }
 function showErr(id,msg){var n=$(id);if(n){n.textContent=msg;n.hidden=false;n.style.color='var(--danger)'}}
+function showLimite(id,msg){var n=$(id);if(!n)return toast(msg);n.textContent=msg+' ';var a=document.createElement('a');a.href=PLANO_URL;a.target='_blank';a.rel='noopener';a.textContent='Ver plano anual';a.style.cssText='color:inherit;font-weight:600;text-decoration:underline';n.appendChild(a);n.hidden=false;n.style.color='var(--danger)'}
 function saveNew(){
   var tel=normTel($('#f-tel').value);
   if(!tel)return showErr('#errNew','Digite um telefone válido, com DDD.');
@@ -1149,6 +1162,7 @@ function saveNew(){
   if(!nome&&!db.contatos.some(function(c){return c.tel===tel}))return showErr('#errNew','Digite o nome do contato.');
   if(f.catMissing)return showErr('#errNew','Escolha ou digite um setor.');
   if(!f.servs.length)return showErr('#errNew','Escolha ou digite ao menos uma função.');
+  var limN=limiteObra(f.obra);if(limN)return showLimite('#errNew',limN);
   if(db.exemplo&&!S.okEx){S.okEx=true;showErr('#errNew','Os contatos de exemplo serão apagados ao salvar seu primeiro contato. Toque em Salvar contato de novo para confirmar.');$('#errNew').style.color='var(--ink)';return}
   if(db.exemplo){dropExamples();toast('Exemplos removidos')}
   var c=db.contatos.find(function(x){return x.tel===tel});
@@ -1200,6 +1214,7 @@ function addItem(kind){
     db.servicos.push(v);
   }else{
     if(db.obras.some(function(o){return o.nome.toLowerCase()===v.toLowerCase()}))return toast('Essa obra já existe');
+    var limA=limiteObra(v);if(limA)return toast(limA);
     db.obras.push({id:uid(),nome:v});
   }
   commit();
