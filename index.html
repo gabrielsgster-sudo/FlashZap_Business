@@ -173,6 +173,7 @@ button,input,select{font:inherit;color:inherit}
 .top::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--ac) 0%,color-mix(in srgb,var(--ac) 35%,transparent) 45%,transparent 100%)}
 .stripe{display:none}
 .brand .sub{margin-top:4px}
+.obra-aviso{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;padding:6px 10px;border-radius:6px;background:var(--surface);border:1px solid var(--ac);font-size:13px}.obra-aviso[hidden]{display:none}.obra-aviso button{background:none;border:0;padding:0;margin-left:auto;color:var(--ink);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}#fObra.ativo{border-color:var(--ac);box-shadow:0 0 0 2px var(--ac)}.empty-all button.lnk{background:none;border:0;padding:0;font:inherit;font-weight:700;color:var(--ink);text-decoration:underline;cursor:pointer}
 .instbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 12px;margin-top:8px;border:1px solid var(--line);border-left:4px solid var(--ac);border-radius:6px;background:var(--surface);font-size:14px}.instbar[hidden]{display:none}.instbar .ib-t{flex:1 1 200px}.instbar .ib-b{display:flex;gap:8px}
 .plano{margin-left:auto;text-align:right;color:var(--mut);font-size:13px;line-height:1.35;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:0 4px;padding-bottom:2px}.plano span{white-space:nowrap}.plano b{color:var(--ink);font-weight:700}
 </style>
@@ -487,6 +488,7 @@ document.addEventListener('DOMContentLoaded',function(){
     <select id="fNota" aria-label="Filtrar por qualidade"><option value="0">Qualidade: todas</option><option value="5">5 estrelas</option><option value="4">4 estrelas ou mais</option><option value="3">3 estrelas ou mais</option></select>
     <button class="btn primary" id="btnAdd">+ Novo contato</button>
   </section>
+  <div id="obraAviso" class="obra-aviso" hidden></div>
   <main class="acc" id="acc" aria-label="Contatos por setor"></main>
 </div>
 <div id="overlay" hidden><div id="sheet" role="dialog" aria-modal="true" aria-label="Detalhes"></div></div>
@@ -688,7 +690,7 @@ function renderList(){
   });
   if(!q&&Object.keys(ui.opens).length>1)html='<div class="ac-tools"><button type="button" class="ac-all" data-act="close-all">Fechar todas</button></div>'+html;
   if(!db.papeis.length)html+='<p class="empty-all">Sua agenda está vazia. Toque em “+ Novo contato” para começar.</p>';
-  else if(narrow&&!P.length)html+='<p class="empty-all">'+((ui.obra&&!q&&!ui.fcat&&!ui.fserv&&!ui.fnota)?'Nenhum contato nesta obra ainda. Toque em “+ Novo contato” para adicionar.':'Nada encontrado com esses filtros.')+'</p>';
+  else if(narrow&&!P.length)html+='<p class="empty-all">'+((ui.obra&&!q&&!ui.fcat&&!ui.fserv&&!ui.fnota)?'Nenhum contato nesta obra ainda. Toque em “+ Novo contato” para adicionar.':'Nada encontrado com esses filtros.')+(ui.obra&&(q||ui.fcat||ui.fserv||ui.fnota)?' <button type="button" class="lnk" data-obra-todas="1">Buscar em todas as obras</button>':'')+'</p>';
   acc.innerHTML=html;
 }
 var f0=db.categorias.find(function(c){return db.papeis.some(function(p){return p.categoria===c.id})});
@@ -705,12 +707,18 @@ function renderChrome(){
   if(pl==='unico')tag='Limitado';else if(pl==='anual')tag='Ilimitado';
   $('#planoTag').innerHTML=tag?'Plano: <b>'+tag+'</b> ·':'';
   $('#stats').textContent=(pl==='unico'?no+'/'+LIMITE_UNICO+' obras':no+(no===1?' obra':' obras'));
+  var pref=lsGet(OBRAKEY)||'';
+  if(!ui.obra&&pref&&pref!=='__none'&&db.obras.some(function(o){return o.id===pref}))ui.obra=pref;
   if(ui.obra&&ui.obra!=='__none'&&!db.obras.some(function(o){return o.id===ui.obra}))ui.obra='';
   if(ui.obra==='__none'&&!db.papeis.some(function(p){return !p.obra}))ui.obra='';
   var o=db.obras.map(function(o){return [o.id,o.nome]});
   if(db.papeis.some(function(p){return !p.obra}))o.push(['__none','Sem obra']);
   o.push(['__newobra','+ Nova obra…']);
   ui.obra=fillSelect($('#fObra'),'Todas as obras',o,ui.obra);
+  $('#fObra').classList.toggle('ativo',!!ui.obra);
+  var av=$('#obraAviso');
+  if(ui.obra){av.hidden=false;av.innerHTML='<span>Mostrando só: <b>'+esc(ui.obra==='__none'?'Sem obra':obraName(ui.obra))+'</b></span><button type="button" data-obra-todas="1">Ver todas</button>'}
+  else{av.hidden=true;av.innerHTML=''}
   ui.fcat=fillSelect($('#fCat'),'Todos os setores',db.categorias.filter(function(c){return db.papeis.some(function(p){return p.categoria===c.id})}).map(function(c){return [c.id,c.nome]}),ui.fcat);
   var sv=db.servicos.slice();db.papeis.forEach(function(p){if(sv.indexOf(p.servico)<0)sv.push(p.servico)});
   ui.fserv=fillSelect($('#fServ'),'Todas as funções',sv.map(function(s){return [s,s]}),ui.fserv);
@@ -1017,6 +1025,7 @@ $('#banner').addEventListener('click',function(e){
 function dropExamples(){db.contatos=[];db.papeis=[];db.obras=db.obras.filter(function(o){return o.id!=='oa'&&o.id!=='ob'});db.exemplo=false;if(ui.obra&&!db.obras.some(function(o){return o.id===ui.obra}))ui.obra=''}
 function clearExamples(){dropExamples();commit();toast('Exemplos apagados')}
 $('#q').addEventListener('input',function(e){ui.q=e.target.value;renderList()});
+document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('[data-obra-todas]');if(t){e.preventDefault();setObra('');}});
 $('#fObra').addEventListener('change',function(e){
   if(e.target.value==='__newobra'){e.target.value=ui.obra;S={type:'obra'};openSheet();return}
   setObra(e.target.value);
