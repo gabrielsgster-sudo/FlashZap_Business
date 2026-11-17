@@ -19,6 +19,7 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 @media (prefers-reduced-motion:no-preference){.dk{transition:background .15s,color .15s}}
 </style>
 <title>FlashZap Business</title>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0A3934"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="FlashZap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
 <style>
 /* Layout: cabeçalho com faixa de obra, filtros, e um treemap em 3 níveis (categoria > serviço > contato) que ocupa a tela */
@@ -173,6 +174,7 @@ button,input,select{font:inherit;color:inherit}
 .top::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--ac) 0%,color-mix(in srgb,var(--ac) 35%,transparent) 45%,transparent 100%)}
 .stripe{display:none}
 .brand .sub{margin-top:4px}
+.instbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 12px;margin-top:8px;border:1px solid var(--line);border-left:4px solid var(--ac);border-radius:6px;background:var(--surface);font-size:14px}.instbar[hidden]{display:none}.instbar .ib-t{flex:1 1 200px}.instbar .ib-b{display:flex;gap:8px}
 .plano{margin-left:auto;text-align:right;color:var(--mut);font-size:13px;line-height:1.35;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:0 4px;padding-bottom:2px}.plano span{white-space:nowrap}.plano b{color:var(--ink);font-weight:700}
 </style>
 <style>
@@ -477,6 +479,7 @@ document.addEventListener('DOMContentLoaded',function(){
   </header>
   <div class="stripe"></div>
   <div id="banner" hidden></div>
+  <div id="instBar" class="instbar" hidden></div>
   <section class="tools" aria-label="Filtros">
     <input id="q" type="search" placeholder="Buscar nome, empresa ou telefone" autocomplete="off" aria-label="Buscar">
     <select id="fObra" aria-label="Filtrar por obra"></select>
@@ -747,6 +750,7 @@ function setServico(id,sv){
 var LIMITE_UNICO=3,PLANO_URL='https://flashzapbusiness.com.br/';
 function maxObras(){return window.fzPlano==='unico'?LIMITE_UNICO:Infinity}
 function obraNova(nome){nome=(nome||'').trim();return !!nome&&!db.obras.some(function(o){return o.nome.toLowerCase()===nome.toLowerCase()})}
+function limiteImport(d){var n=(d.exemplo?0:(d.obras||[]).length);return n>maxObras()?'A cópia tem '+n+' obras e o seu plano inclui até '+LIMITE_UNICO+'.':''}
 function obrasReais(){return temExemplos()?0:db.obras.length}
 function limiteObra(nome){
   if(!obraNova(nome)||obrasReais()<maxObras())return '';
@@ -982,8 +986,9 @@ function sheetSettings(){
        +'<div class="row2" style="margin-top:0"><button class="btn danger" data-act="obra-del-all">'+(nUso?'Excluir a obra, os contatos e as avaliações':'Excluir a obra')+'</button>'+'<button class="btn" data-act="obra-del-no">Cancelar</button></div></div>';
     }
   }
-  h+='<h3>Backup</h3><div class="row2" style="margin-top:0"><button class="btn" data-act="export">Baixar JSON</button><button class="btn" data-act="copyjson">Copiar JSON</button><button class="btn" data-act="import">Importar JSON</button></div><input type="file" id="imp" accept="application/json,.json" hidden>';
-  if(S.pendingImport)h+='<p class="confirm" style="margin-top:10px">Substituir os '+db.contatos.length+' contatos atuais por '+S.pendingImport.contatos.length+' do arquivo? <button class="btn sm danger" data-act="import-yes">Substituir</button><button class="btn sm" data-act="import-no">Cancelar</button></p>';
+  h+=instBlock();
+  h+='<h3>Cópia de segurança</h3><p class="mut" style="margin:0 0 8px">Baixe uma cópia de vez em quando. Ao restaurar, ela substitui tudo o que está no app agora.</p><div class="row2" style="margin-top:0"><button class="btn" data-act="export">Baixar cópia</button><button class="btn" data-act="import">Restaurar cópia</button></div><input type="file" id="imp" accept="application/json,.json" hidden>';
+  if(S.pendingImport)h+='<p class="confirm" style="margin-top:10px">Substituir os '+db.contatos.length+' contatos atuais pelos '+S.pendingImport.contatos.length+' da cópia? <button class="btn sm danger" data-act="import-yes">Substituir</button><button class="btn sm" data-act="import-no">Cancelar</button></p>';
   return h;
 }
 function openContact(tel){S={type:'contact',tel:tel,adding:false,editing:false,confirm:null};openSheet()}
@@ -1056,8 +1061,9 @@ sheet.addEventListener('change',function(e){
       try{
         var d=JSON.parse(rd.result);
         if(!d||!Array.isArray(d.papeis)||!Array.isArray(d.contatos)||!Array.isArray(d.categorias))throw new Error('x');
+        var lm=limiteImport(d);if(lm){toast(lm);e.target.value='';return}
         S.pendingImport=d;refreshSheet();
-      }catch(err){toast('Arquivo inválido: não parece um backup do FlashZap Business')}
+      }catch(err){toast('Arquivo inválido: não parece uma cópia do FlashZap Business')}
     };
     rd.readAsText(e.target.files[0]);
   }
@@ -1098,6 +1104,7 @@ sheet.addEventListener('click',function(e){
   else if(a==='merge-yes')mergeContact();
   else if(a==='merge-no'){S.mergeTel=null;refreshSheet()}
   else if(a==='copytel'){copy(fmtTel(S.tel))}
+  else if(a==='install'){fzInstalar()}
   else if(a==='fav'){var cc=db.contatos.find(function(x){return x.tel===S.tel});if(cc){if(cc.fav)delete cc.fav;else cc.fav=true;commit()}}
   else if(a==='add-papel'){S.adding=true;refreshSheet()}
   else if(a==='cancel-add'){S.adding=false;refreshSheet()}
@@ -1130,9 +1137,8 @@ sheet.addEventListener('click',function(e){
   else if(a==='obra-del-all')removeObra(S.confirmObra,'all');
   else if(a==='obra-del-no'){S.confirmObra=null;refreshSheet()}
   else if(a==='export')exportJson();
-  else if(a==='copyjson')copy(JSON.stringify(db,null,1));
   else if(a==='import')$('#imp').click();
-  else if(a==='import-yes'){var d=S.pendingImport;['obras','categorias','servicos','contatos','papeis'].forEach(function(k){if(!Array.isArray(d[k]))d[k]=[]});d.exemplo=false;db=d;S.pendingImport=null;commit();toast('Backup importado')}
+  else if(a==='import-yes'){var d=S.pendingImport;var lm2=limiteImport(d);if(lm2){S.pendingImport=null;refreshSheet();toast(lm2);return}['obras','categorias','servicos','contatos','papeis'].forEach(function(k){if(!Array.isArray(d[k]))d[k]=[]});d.exemplo=false;db=d;S.pendingImport=null;commit();toast('Cópia restaurada')}
   else if(a==='import-no'){S.pendingImport=null;refreshSheet()}
   else if(a==='logout'){S.confirmLogout=true;refreshSheet()}
   else if(a==='logout-no'){S.confirmLogout=false;refreshSheet()}
@@ -1148,8 +1154,49 @@ function exportJson(){
     var blob=new Blob([JSON.stringify(db,null,1)],{type:'application/json'}),a=document.createElement('a');
     a.href=URL.createObjectURL(blob);a.download='flashzap-business-'+now().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();
     setTimeout(function(){URL.revokeObjectURL(a.href)},2000);
-  }catch(e){toast('Não foi possível baixar aqui. Use “Copiar JSON”.')}
+  }catch(e){toast('Não foi possível baixar aqui. Tente em outro navegador.')}
 }
+/* ---------- instalar o app (ícone na tela inicial) ---------- */
+var inst={ev:null,ios:/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)};
+function instInstalado(){try{return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true}catch(e){return false}}
+function instDica(){
+  if(inst.ios)return 'No iPhone: abra no Safari, toque em Compartilhar (o quadrado com a seta) e depois em Adicionar à Tela de Início.';
+  return 'No menu do navegador, escolha Instalar app (ou Adicionar à tela inicial).';
+}
+function instPodeBotao(){return !!inst.ev}
+function fzInstalar(){
+  if(!inst.ev){toast(instDica());return}
+  var e=inst.ev;inst.ev=null;
+  try{e.prompt();e.userChoice.then(function(r){lsSet('fz.inst',r&&r.outcome==='accepted'?'ok':'no:'+Date.now());instBar();if(S.type==='settings')refreshSheet()},function(){})}catch(x){}
+}
+function instBlock(){
+  if(instInstalado())return '<h3>Instalar o app</h3><p class="mut" style="margin:0 0 8px">O app já está instalado neste aparelho.</p>';
+  return '<h3>Instalar o app</h3><p class="mut" style="margin:0 0 8px">Coloque o ícone do FlashZap na tela inicial para abrir com um toque.</p>'
+    +(instPodeBotao()?'<div class="row2" style="margin-top:0"><button class="btn primary" data-act="install">Instalar o app</button></div>':'<p class="hint" style="margin:0">'+esc(instDica())+'</p>');
+}
+function instBar(){
+  var b=document.getElementById('instBar');if(!b)return;
+  var ok=lsGet('fz.inst')||'';
+  var recusou=ok==='ok'||(ok.indexOf('no:')===0&&Date.now()-parseInt(ok.slice(3),10)<14*864e5);
+  var logado=!document.body.classList.contains('auth-lock');
+  if(!logado||instInstalado()||recusou||(!inst.ev&&!inst.ios)){b.hidden=true;return}
+  b.hidden=false;
+  b.innerHTML='<span class="ib-t">'+(inst.ev?'<b>Instale o FlashZap</b> na tela inicial e abra com um toque.':'<b>Instale o FlashZap</b> na tela inicial. '+esc(instDica()))+'</span><span class="ib-b">'+(inst.ev?'<button class="btn sm primary" data-ib="ok">Instalar</button>':'')+'<button class="btn sm" data-ib="no">'+(inst.ev?'Agora não':'Entendi')+'</button></span>';
+}
+(function(){
+  var bar=document.getElementById('instBar');
+  if(bar)bar.addEventListener('click',function(e){
+    var t=e.target.closest('[data-ib]');if(!t)return;
+    if(t.dataset.ib==='ok')fzInstalar();
+    else{lsSet('fz.inst','no:'+Date.now());instBar()}
+  });
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();inst.ev=e;instBar();if(S.type==='settings')refreshSheet()});
+  window.addEventListener('appinstalled',function(){inst.ev=null;lsSet('fz.inst','ok');instBar();if(S.type==='settings')refreshSheet()});
+  try{new MutationObserver(instBar).observe(document.body,{attributes:true,attributeFilter:['class']})}catch(e){}
+  if(location.protocol==='https:'&&'serviceWorker' in navigator)window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
+  setTimeout(instBar,1500);
+})();
+
 function showErr(id,msg){var n=$(id);if(n){n.textContent=msg;n.hidden=false;n.style.color='var(--danger)'}}
 function showLimite(id,msg){var n=$(id);if(!n)return toast(msg);n.textContent=msg+' ';var a=document.createElement('a');a.href=PLANO_URL;a.target='_blank';a.rel='noopener';a.textContent='Ver plano anual';a.style.cssText='color:inherit;font-weight:600;text-decoration:underline';n.appendChild(a);n.hidden=false;n.style.color='var(--danger)'}
 function saveNew(){
