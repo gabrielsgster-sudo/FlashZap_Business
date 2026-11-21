@@ -1057,4 +1057,265 @@ $('#btnSettings').addEventListener('click',function(){S={type:'settings'};openSh
 $('#btnRate').addEventListener('click',function(){if(!ui.rateSort)ui.rateSort=lsGet('flashzap.ratesort')==='nota'?'nota':'az';S={type:'rate',rateObra:ui.obra||''};openSheet()});
 sheet.addEventListener('change',function(e){if(!e.target||S.type!=='rate')return;if(e.target.id==='r-obra'){S.rateObra=e.target.value;refreshSheet()}else if(e.target.id==='r-cat'){S.rateCat=e.target.value;refreshSheet()}});
 $('#btnTheme').addEventListener('click',function(){
-  var cur=document.documentElement.getA
+  var cur=document.documentElement.getAttribute('data-theme');
+  var dark=cur?cur==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(dark?'light':'dark');lsSet(THKEY,dark?'light':'dark');
+});
+function applyTheme(t){if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);else document.documentElement.removeAttribute('data-theme')}
+
+
+/* ações dentro das janelas */
+sheet.addEventListener('input',function(e){
+  if(e.target.id==='f-tel'){
+    var tel=normTel(e.target.value),h=$('#dupHint'),c=tel&&db.contatos.find(function(x){return x.tel===tel});
+    if(c){h.hidden=false;h.textContent='Já está na agenda como '+(c.nome||fmtTel(c.tel))+'. O que você marcar abaixo será somado a esse contato.';
+      if(!$('#f-nome').value)$('#f-nome').value=c.nome;if(!$('#f-emp').value)$('#f-emp').value=c.empresa}
+    else h.hidden=true;
+  }
+});
+sheet.addEventListener('keydown',function(e){if(e.key!=='Enter')return;if(e.target.id==='o-nome'){e.preventDefault();saveObra()}if(e.target.id==='mv-new'){e.preventDefault();moveNew(S.newCatFor)}if(e.target.id==='sv-new'){e.preventDefault();servNew(S.newServFor)}});
+sheet.addEventListener('change',function(e){
+  if(e.target.id==='f-obra'){var nn=$('#f-obra-new');nn.hidden=e.target.value!=='__new';if(!nn.hidden)nn.focus()}
+  var i=e.target.closest&&e.target.closest('input[data-list]');
+  if(i)renameItem(i.dataset.list,i.dataset.id,i.value.trim(),i);
+  if(e.target.id==='imp'&&e.target.files[0]){
+    var rd=new FileReader();
+    rd.onload=function(){
+      try{
+        var d=JSON.parse(rd.result);
+        if(!d||!Array.isArray(d.papeis)||!Array.isArray(d.contatos)||!Array.isArray(d.categorias))throw new Error('x');
+        var lm=limiteImport(d);if(lm){toast(lm);e.target.value='';return}
+        S.pendingImport=d;refreshSheet();
+      }catch(err){toast('Arquivo inválido: não parece uma cópia do FlashZap Business')}
+    };
+    rd.readAsText(e.target.files[0]);
+  }
+});
+function renameItem(kind,id,val,inp){
+  if(!val){inp.value=inp.defaultValue;return}
+  if(kind==='cat'){var c=db.categorias.find(function(x){return x.id===id});if(c)c.nome=val}
+  else if(kind==='obra'){var o=db.obras.find(function(x){return x.id===id});if(o)o.nome=val}
+  else{
+    if(db.servicos.some(function(s){return s!==id&&s.toLowerCase()===val.toLowerCase()})){toast('Já existe uma função com esse nome');inp.value=id;return}
+    db.servicos=db.servicos.map(function(s){return s===id?val:s});
+    db.papeis.forEach(function(p){if(p.servico===id)p.servico=val});
+    inp.dataset.id=val;
+  }
+  commit(false);renderChrome();renderList();
+}
+sheet.addEventListener('click',function(e){
+  var el=e.target.closest('[data-act]');if(!el)return;
+  var a=el.dataset.act,id=el.dataset.id;
+  if(a==='close')closeSheet();
+  else if(a==='rate-sort'){ui.rateSort=ui.rateSort==='nota'?'az':'nota';lsSet('flashzap.ratesort',ui.rateSort);refreshSheet()}
+  else if(a==='rate-open'){var bk={rateObra:S.rateObra,rateCat:S.rateCat,scroll:sheet.scrollTop};S={type:'contact',tel:el.dataset.tel,adding:false,editing:false,confirm:null,back:bk};refreshSheet();sheet.scrollTop=0}
+  else if(a==='tog')el.setAttribute('aria-pressed',el.getAttribute('aria-pressed')==='true'?'false':'true');
+  else if(a==='move'){S.editCat=null;S.newCatFor=null;movePapel(id,el.dataset.cat);refreshSheet()}
+  else if(a==='cat-edit'){S.editCat=id;refreshSheet()}
+  else if(a==='serv-edit'){S.editServ=id;refreshSheet()}
+  else if(a==='serv-no'){S.editServ=null;S.newServFor=null;refreshSheet()}
+  else if(a==='serv-new'){S.newServFor=id;refreshSheet();var si=$('#sv-new');if(si)si.focus()}
+  else if(a==='serv-new-no'){S.newServFor=null;refreshSheet()}
+  else if(a==='serv-new-ok')servNew(id);
+  else if(a==='rate'){var rp=db.papeis.find(function(x){return x.id===id});if(rp){var nv=+el.dataset.v;if(rp.nota===nv)delete rp.nota;else rp.nota=nv;commit();refreshSheet()}}
+  else if(a==='serv-set'){S.editServ=null;S.newServFor=null;setServico(id,el.dataset.v)}
+  else if(a==='move-new'){S.newCatFor=id;refreshSheet();var mi=$('#mv-new');if(mi)mi.focus()}
+  else if(a==='move-new-no'){S.newCatFor=null;refreshSheet()}
+  else if(a==='move-new-ok')moveNew(id);
+  else if(a==='edit'){S.editing=true;S.editDraft=null;S.mergeTel=null;refreshSheet()}
+  else if(a==='cancel-edit'){S.editing=false;S.editDraft=null;S.mergeTel=null;refreshSheet()}
+  else if(a==='merge-yes')mergeContact();
+  else if(a==='merge-no'){S.mergeTel=null;refreshSheet()}
+  else if(a==='copytel'){copy(fmtTel(S.tel))}
+  else if(a==='install'){fzInstalar()}
+  else if(a==='fav'){var cc=db.contatos.find(function(x){return x.tel===S.tel});if(cc){if(cc.fav)delete cc.fav;else cc.fav=true;commit()}}
+  else if(a==='add-papel'){S.adding=true;refreshSheet()}
+  else if(a==='cancel-add'){S.adding=false;refreshSheet()}
+  else if(a==='rm-papel'){S.confirm='p:'+id;refreshSheet()}
+  else if(a==='rm-contact'){S.confirm='c';refreshSheet()}
+  else if(a==='rm-no'){S.confirm=null;refreshSheet()}
+  else if(a==='rm-papel-yes'){db.papeis=db.papeis.filter(function(p){return p.id!==id});S.confirm=null;
+    if(!db.papeis.some(function(p){return p.tel===S.tel})){db.contatos=db.contatos.filter(function(c){return c.tel!==S.tel});closeSheet()}
+    commit();toast('Serviço removido')}
+  else if(a==='rm-contact-yes'){db.papeis=db.papeis.filter(function(p){return p.tel!==S.tel});db.contatos=db.contatos.filter(function(c){return c.tel!==S.tel});closeSheet();commit();toast('Contato excluído')}
+  else if(a==='save-new')saveNew();
+  else if(a==='save-obra')saveObra();
+  else if(a==='save-papel'){
+    var f=readPapelFields();if(f.catMissing)return showErr('#errAdd','Escolha ou digite um setor.');if(!f.servs.length)return showErr('#errAdd','Escolha ou digite ao menos uma função.');
+    var limP=limiteObra(f.obra);if(limP)return showLimite('#errAdd',limP);
+    addPapeis(S.tel,f);S.adding=false;commit();toast('Adicionado')}
+  else if(a==='save-edit')saveEdit();
+  else if(a==='save-gh')saveGh();
+  else if(a==='off-gh'){gh=null;try{localStorage.removeItem(GHKEY)}catch(x){}sha=null;setSync('local');refreshSheet();toast('Sincronia desligada. Os dados continuam neste aparelho.')}
+  else if(a==='pull'){ghPull().then(function(r){if(r&&r!=='empty'){adopt(r)}else if(r==='empty')toast('Ainda não há arquivo no GitHub');refreshSheet()})}
+  else if(a==='add-item')addItem(el.dataset.list);
+  else if(a==='del-item')delItem(el.dataset.list,id);
+  else if(a==='list-del-no'){S.confirmList=null;refreshSheet()}
+  else if(a==='list-del-yes'){var cl=S.confirmList,rep=$('#rep-sel');if(!cl||!rep)return;var rv=rep.value;
+    db.papeis.forEach(function(p){if(cl.kind==='cat'&&p.categoria===cl.id)p.categoria=rv;if(cl.kind==='serv'&&p.servico===cl.id)p.servico=rv});
+    var seen={};db.papeis=db.papeis.filter(function(p){var k=[p.tel,p.obra,p.categoria,p.servico].join('|');if(seen[k])return false;seen[k]=1;return true});
+    if(cl.kind==='cat')db.categorias=db.categorias.filter(function(c){return c.id!==cl.id});else db.servicos=db.servicos.filter(function(x){return x!==cl.id});
+    S.confirmList=null;commit();toast(cl.kind==='cat'?'Setor excluído':'Função excluída')}
+  else if(a==='open-lists'){S={type:'settings'};openSheet();setTimeout(function(){var h=sheet.querySelector('#sec-cat');if(h)h.scrollIntoView()},50)}
+  else if(a==='obra-del-all')removeObra(S.confirmObra,'all');
+  else if(a==='obra-del-no'){S.confirmObra=null;refreshSheet()}
+  else if(a==='export')exportJson();
+  else if(a==='import')$('#imp').click();
+  else if(a==='import-yes'){var d=S.pendingImport;var lm2=limiteImport(d);if(lm2){S.pendingImport=null;refreshSheet();toast(lm2);return}['obras','categorias','servicos','contatos','papeis'].forEach(function(k){if(!Array.isArray(d[k]))d[k]=[]});d.exemplo=false;db=d;S.pendingImport=null;commit();toast('Cópia restaurada')}
+  else if(a==='import-no'){S.pendingImport=null;refreshSheet()}
+  else if(a==='logout'){S.confirmLogout=true;refreshSheet()}
+  else if(a==='logout-no'){S.confirmLogout=false;refreshSheet()}
+  else if(a==='logout-yes'){S.confirmLogout=false;var wipe=window.fzAuth.cloud();window.fzAuth.logout(wipe).then(function(done){if(done)closeSheet();else refreshSheet()})}
+});
+function copy(t){
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(function(){toast('Copiado')},function(){legacyCopy(t)});
+  else legacyCopy(t);
+}
+function legacyCopy(t){try{var x=document.createElement('textarea');x.value=t;x.setAttribute('readonly','');x.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(x);x.select();x.setSelectionRange(0,999);var ok=document.execCommand('copy');x.remove();toast(ok?'Copiado':'Não foi possível copiar neste ambiente')}catch(e){toast('Não foi possível copiar neste ambiente')}}
+function exportJson(){
+  try{
+    var blob=new Blob([JSON.stringify(db,null,1)],{type:'application/json'}),a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);a.download='flashzap-business-'+now().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(a.href)},2000);
+  }catch(e){toast('Não foi possível baixar aqui. Tente em outro navegador.')}
+}
+/* ---------- instalar o app (ícone na tela inicial) ---------- */
+var inst={ev:null,ios:/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)};
+function instInstalado(){try{return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true}catch(e){return false}}
+function instDica(){
+  if(inst.ios)return 'No iPhone: abra no Safari, toque em Compartilhar (o quadrado com a seta) e depois em Adicionar à Tela de Início.';
+  return 'No menu do navegador, escolha Instalar app (ou Adicionar à tela inicial).';
+}
+function instPodeBotao(){return !!inst.ev}
+function fzInstalar(){
+  if(!inst.ev){toast(instDica());return}
+  var e=inst.ev;inst.ev=null;
+  try{e.prompt();e.userChoice.then(function(r){lsSet('fz.inst',r&&r.outcome==='accepted'?'ok':'no:'+Date.now());instBar();if(S.type==='settings')refreshSheet()},function(){})}catch(x){}
+}
+function instBlock(){
+  if(instInstalado())return '<h3>Instalar o app</h3><p class="mut" style="margin:0 0 8px">O app já está instalado neste aparelho.</p>';
+  return '<h3>Instalar o app</h3><p class="mut" style="margin:0 0 8px">Coloque o ícone do FlashZap na tela inicial para abrir com um toque.</p>'
+    +(instPodeBotao()?'<div class="row2" style="margin-top:0"><button class="btn primary" data-act="install">Instalar o app</button></div>':'<p class="hint" style="margin:0">'+esc(instDica())+'</p>');
+}
+function instBar(){
+  var b=document.getElementById('instBar');if(!b)return;
+  var ok=lsGet('fz.inst')||'';
+  var recusou=ok==='ok'||(ok.indexOf('no:')===0&&Date.now()-parseInt(ok.slice(3),10)<14*864e5);
+  var logado=!document.body.classList.contains('auth-lock');
+  if(!logado||instInstalado()||recusou||(!inst.ev&&!inst.ios)){b.hidden=true;return}
+  b.hidden=false;
+  b.innerHTML='<span class="ib-t">'+(inst.ev?'<b>Instale o FlashZap</b> na tela inicial e abra com um toque.':'<b>Instale o FlashZap</b> na tela inicial. '+esc(instDica()))+'</span><span class="ib-b">'+(inst.ev?'<button class="btn sm primary" data-ib="ok">Instalar</button>':'')+'<button class="btn sm" data-ib="no">'+(inst.ev?'Agora não':'Entendi')+'</button></span>';
+}
+(function(){
+  var bar=document.getElementById('instBar');
+  if(bar)bar.addEventListener('click',function(e){
+    var t=e.target.closest('[data-ib]');if(!t)return;
+    if(t.dataset.ib==='ok')fzInstalar();
+    else{lsSet('fz.inst','no:'+Date.now());instBar()}
+  });
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();inst.ev=e;instBar();if(S.type==='settings')refreshSheet()});
+  window.addEventListener('appinstalled',function(){inst.ev=null;lsSet('fz.inst','ok');instBar();if(S.type==='settings')refreshSheet()});
+  try{new MutationObserver(instBar).observe(document.body,{attributes:true,attributeFilter:['class']})}catch(e){}
+  if(location.protocol==='https:'&&'serviceWorker' in navigator)window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
+  setTimeout(instBar,1500);
+})();
+
+function showErr(id,msg){var n=$(id);if(n){n.textContent=msg;n.hidden=false;n.style.color='var(--danger)'}}
+function showLimite(id,msg){var n=$(id);if(!n)return toast(msg);n.textContent=msg+' ';var a=document.createElement('a');a.href=PLANO_URL;a.target='_blank';a.rel='noopener';a.textContent='Ver plano anual';a.style.cssText='color:inherit;font-weight:600;text-decoration:underline';n.appendChild(a);n.hidden=false;n.style.color='var(--danger)'}
+function saveNew(){
+  var tel=normTel($('#f-tel').value);
+  if(!tel)return showErr('#errNew','Digite um telefone válido, com DDD.');
+  var nome=$('#f-nome').value.trim(),emp=$('#f-emp').value.trim(),f=readPapelFields();
+  if(!nome&&!db.contatos.some(function(c){return c.tel===tel}))return showErr('#errNew','Digite o nome do contato.');
+  if(f.catMissing)return showErr('#errNew','Escolha ou digite um setor.');
+  if(!f.servs.length)return showErr('#errNew','Escolha ou digite ao menos uma função.');
+  var limN=limiteObra(f.obra);if(limN)return showLimite('#errNew',limN);
+  if(temExemplos()&&!S.okEx){S.okEx=true;showErr('#errNew','Os contatos de exemplo serão apagados ao salvar seu primeiro contato. Toque em Salvar contato de novo para confirmar.');$('#errNew').style.color='var(--ink)';return}
+  if(temExemplos()){dropExamples();toast('Exemplos removidos')}else db.exemplo=false;
+  var c=db.contatos.find(function(x){return x.tel===tel});
+  if(c){if(nome)c.nome=nome;if(emp)c.empresa=emp}else db.contatos.push({tel:tel,nome:nome,empresa:emp});
+  addPapeis(tel,f);
+  if(f.obra){ui.obra=ensureObra(f.obra);lsSet(OBRAKEY,ui.obra)}
+  S={type:'contact',tel:tel,adding:false,editing:false,confirm:null};
+  commit();
+}
+function saveEdit(){
+  var tel=normTel($('#e-tel').value);
+  if(!tel)return showErr('#errEdit','Telefone inválido.');
+  if(tel!==S.tel&&db.contatos.some(function(c){return c.tel===tel})){
+    S.editDraft={nome:$('#e-nome').value,emp:$('#e-emp').value,tel:$('#e-tel').value};S.mergeTel=tel;refreshSheet();
+    var mb=sheet.querySelector('[data-act="merge-yes"]');if(mb)mb.scrollIntoView({block:'center'});return;
+  }
+  var c=db.contatos.find(function(x){return x.tel===S.tel});
+  c.nome=$('#e-nome').value.trim();c.empresa=$('#e-emp').value.trim();
+  if(tel!==S.tel){db.papeis.forEach(function(p){if(p.tel===S.tel)p.tel=tel});c.tel=tel;S.tel=tel}
+  S.editing=false;S.editDraft=null;S.mergeTel=null;commit();
+}
+function mergeContact(){
+  var oldTel=S.tel,newTel=S.mergeTel,dr=S.editDraft||{};
+  var o=db.contatos.find(function(x){return x.tel===oldTel}),t=db.contatos.find(function(x){return x.tel===newTel});
+  if(!o||!t||oldTel===newTel){S.mergeTel=null;S.editDraft=null;refreshSheet();return}
+  var nome=(dr.nome||'').trim(),emp=(dr.emp||'').trim();
+  t.nome=nome||o.nome||t.nome;t.empresa=emp||o.empresa||t.empresa;
+  if(o.fav)t.fav=true;
+  db.papeis.forEach(function(p){if(p.tel===oldTel)p.tel=newTel});
+  var seen={},out=[];
+  db.papeis.forEach(function(p){var k=[p.tel,p.obra,p.categoria,p.servico].join('|');if(seen[k]){if(p.nota&&!seen[k].nota)seen[k].nota=p.nota;seen[k].hist=(seen[k].hist||[]).concat(p.hist||[])}else{seen[k]=p;out.push(p)}});
+  db.papeis=out;db.contatos=db.contatos.filter(function(x){return x.tel!==oldTel});
+  S.tel=newTel;S.editing=false;S.editDraft=null;S.mergeTel=null;commit();toast('Número trocado em todas as obras e funções');
+}
+function saveGh(){
+  var o=$('#g-owner').value.trim(),r=$('#g-repo').value.trim(),t=$('#g-token').value.trim()||(gh&&gh.token)||'';
+  if(!o||!r||!t)return showErr('#errGh','Preencha usuário, repositório e token.');
+  gh={owner:o,repo:r,branch:$('#g-branch').value.trim()||'main',path:$('#g-path').value.trim()||'contatos.json',token:t};
+  lsSet(GHKEY,JSON.stringify(gh));sha=null;
+  startSync().then(function(){if(S.type==='settings')refreshSheet();toast(syncState==='erro'?'Não sincronizou: '+syncMsg:'Sincronizado com o GitHub')});
+}
+function addItem(kind){
+  var inp=$('#add-'+kind),v=inp.value.trim();if(!v)return;
+  if(kind==='cat'){
+    if(db.categorias.some(function(c){return c.nome.toLowerCase()===v.toLowerCase()}))return toast('Esse setor já existe');
+    db.categorias.push({id:uid(),nome:v,h:nextHue()});
+  }else if(kind==='serv'){
+    if(db.servicos.some(function(s){return s.toLowerCase()===v.toLowerCase()}))return toast('Essa função já existe');
+    db.servicos.push(v);
+  }else{
+    if(db.obras.some(function(o){return o.nome.toLowerCase()===v.toLowerCase()}))return toast('Essa obra já existe');
+    var limA=limiteObra(v);if(limA)return toast(limA);
+    db.obras.push({id:uid(),nome:v});
+  }
+  commit();
+}
+function removeObra(id,mode){
+  if(mode==='all'){
+    var tels={};db.papeis.forEach(function(p){if(p.obra===id)tels[p.tel]=1});
+    db.papeis=db.papeis.filter(function(p){return p.obra!==id});
+    db.contatos=db.contatos.filter(function(c){return !tels[c.tel]||db.papeis.some(function(p){return p.tel===c.tel})});
+  }else{
+    db.papeis.forEach(function(p){if(p.obra===id)p.obra=''});
+    var seen={};db.papeis=db.papeis.filter(function(p){var k=[p.tel,p.obra,p.servico,p.categoria].join('|');if(seen[k])return false;seen[k]=1;return true});
+  }
+  db.obras=db.obras.filter(function(o){return o.id!==id});
+  if(ui.obra===id){ui.obra='';lsSet(OBRAKEY,'')}
+  S.confirmObra=null;commit();toast('Obra excluída');
+}
+function delItem(kind,id){
+  if(kind==='obra'){S.confirmObra=id;refreshSheet();var cp=sheet.querySelector('.pp[style*="danger"]');if(cp)cp.scrollIntoView({block:'center'});return}
+  if(usage(kind,id)){S.confirmList={kind:kind,id:id};refreshSheet();var rs=sheet.querySelector('#rep-sel');if(rs)rs.scrollIntoView({block:'center'});else{var cp2=sheet.querySelector('.pp[style*="danger"]');if(cp2)cp2.scrollIntoView({block:'center'})}return}
+  if(kind==='cat')db.categorias=db.categorias.filter(function(c){return c.id!==id});
+  else if(kind==='serv')db.servicos=db.servicos.filter(function(s){return s!==id});
+  else db.obras=db.obras.filter(function(o){return o.id!==id});
+  commit();
+}
+
+/* ---------- início ---------- */
+applyTheme(lsGet(THKEY));
+setSync(syncState==='idle'?'idle':'local');
+render();
+if(ghOk())startSync();
+syncDock();
+window.__obra={get db(){return db}};
+})();
+</script>
+
+</body></html>
