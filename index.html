@@ -238,7 +238,7 @@ body:not(.auth-lock) #auth{display:none}
 'use strict';
 /* Entrada por link enviado ao e-mail (Firebase). Só acessa quem está na lista "licencas" do Firestore. */
 var CFG={sessionDays:7,maxDevices:2,resendSeconds:30,checkSeconds:60};
-var SKEY='flashzap.auth',DKEY='flashzap.device',EKEY='flashzap.emailLink',VKEY='flashzap.verified',PKEY='flashzap.plano';
+var SKEY='flashzap.auth',DKEY='flashzap.device',EKEY='flashzap.emailLink',VKEY='flashzap.verified',PKEY='flashzap.plano',NKEY='flashzap.pend';
 var $=function(s){return document.querySelector(s)};
 function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
@@ -389,21 +389,36 @@ async function cloudStart(u){
     if(snap.exists){
       var remote=null;try{remote=JSON.parse(snap.data().dados)}catch(e){}
       if(remote){
-        if(local.exemplo||(remote.updatedAt||'')>(local.updatedAt||''))app.adopt(remote,'Contatos carregados da nuvem');
-        else if((remote.updatedAt||'')<(local.updatedAt||''))cloudPush();
+        if(local.exemplo||(remote.updatedAt||'')>(local.updatedAt||'')){
+          if(lsGet(NKEY)&&!local.exemplo){try{lsSet('flashzap.conflito',JSON.stringify(local))}catch(e){}}
+          lsDel(NKEY);app.adopt(remote,'Contatos carregados da nuvem');
+        }else if((remote.updatedAt||'')<(local.updatedAt||''))cloudPush(!!lsGet(NKEY));
       }
-    }else if(!local.exemplo){cloudPush()}
+    }else if(!local.exemplo){cloudPush(!!lsGet(NKEY))}
   }
   lsSet(VKEY,String(Date.now()));
   return 'ok';
 }
-function cloudSchedule(){if(!cloudRef)return;clearTimeout(pushT);pushT=setTimeout(cloudPush,1500)}
-async function cloudPush(){
+function cloudSchedule(){
+  var s=readSession();if(!cloudRef&&!(s&&/^(google|fb)-/.test(s.token)))return;
+  lsSet(NKEY,'1'); /* mudança ainda não enviada para a nuvem */
+  if(!cloudRef)return; /* aberto sem internet: envia quando o sinal voltar */
+  clearTimeout(pushT);pushT=setTimeout(function(){cloudPush(false)},1500);
+}
+async function cloudPush(avisar){
   if(!cloudRef||!window.fzApp)return true;
   var d=window.fzApp.getDb();if(d.exemplo)return true;
-  try{await cloudRef.set({dados:JSON.stringify(d),atualizadoEm:d.updatedAt||''},{merge:true});return true}
+  try{await cloudRef.set({dados:JSON.stringify(d),atualizadoEm:d.updatedAt||''},{merge:true});lsDel(NKEY);if(avisar===true)window.fzApp.toast('Salvo na nuvem.');return true}
   catch(e){window.fzApp.toast('Não salvou na nuvem. Os dados continuam neste aparelho.');return false}
 }
+/* Voltou o sinal: envia o que ficou pendente. */
+async function reconectar(){
+  if(!lsGet(NKEY))return;
+  if(cloudRef){clearTimeout(pushT);cloudPush(true);return}
+  try{await fbInit()}catch(e){return}
+  var un=fbAuth.onAuthStateChanged(function(u){un();if(!u)return;cloudStart(u)});
+}
+window.addEventListener('online',reconectar);
 window.fzCloud={schedule:cloudSchedule};
 window.fzAuth={
   email:function(){var s=readSession();return sessionValid(s)?s.email:''},
