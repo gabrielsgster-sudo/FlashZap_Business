@@ -126,7 +126,7 @@ button,input,select{font:inherit;color:inherit}
 .x:disabled{opacity:.35;cursor:not-allowed}
 #sheet h3{margin:20px 0 8px;font:600 14px/1 var(--font-d);text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
 .telrow{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;margin:14px 0 10px}
-.telrow .telbig{margin:0;font-size:clamp(20px,5.6vw,24px);white-space:nowrap}
+.telrow .telbig{margin:0;font-size:clamp(20px,5.6vw,24px);white-space:nowrap;flex:1 1 100%}.tbtns{display:flex;gap:8px;flex-wrap:wrap}.btn.ag{border:2px solid var(--ac);font-weight:700}.btn.ico{width:44px;padding:0;display:inline-flex;align-items:center;justify-content:center}.qn{margin:10px 0 4px;background:var(--surface);border:2px solid var(--ink);border-radius:12px;overflow:hidden}.qn.no{border-style:dashed;border-color:var(--ac)}.qn-h{padding:7px 14px;background:var(--ink);color:var(--bg);font:700 11px/1.2 var(--font-d);letter-spacing:.2em;text-transform:uppercase}.qn-b{padding:14px 14px 8px}.qn-b h3{margin:0;font:700 28px/1.05 var(--font-d);text-transform:uppercase}.qn-b p{margin:4px 0 0}.qn-v{list-style:none;margin:6px 0 0;padding:0 10px;display:flex;flex-direction:column;gap:6px}.qn-v li{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:6px;background:var(--bg);font-size:14px}.qn-v small{display:block;color:var(--mut)}.qn-a{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px 14px}.qn-a .btn{flex:1 1 110px}
 .telrow .btn{white-space:nowrap;flex:none}
 .telbig{font:600 24px/1.1 var(--font-b);font-variant-numeric:tabular-nums;margin:14px 0 10px}
 .acts{display:flex;flex-wrap:wrap;gap:8px}
@@ -661,8 +661,10 @@ async function startSync(){
 }
 
 /* ---------- consultas ---------- */
+function numQuery(){var q=ui.q.trim(),d=q.replace(/\D/g,'');return (d.length>=8&&!/[A-Za-zÀ-ÿ]/.test(q))?d:''}
 function filtered(){
-  var q=ui.q.trim().toLowerCase(),qd=q.replace(/\D/g,'');
+  var q=ui.q.trim().toLowerCase(),qd=q.replace(/\D/g,''),nq=numQuery();
+  if(nq)return db.papeis.filter(function(p){return p.tel.indexOf(nq)>-1});
   return db.papeis.filter(function(p){
     if(ui.obra){if(ui.obra==='__none'?p.obra!=='':p.obra!==ui.obra)return false}
     if(ui.favs&&!cOf(p.tel).fav)return false;
@@ -708,8 +710,25 @@ function catSection(c,items,open,q){
   }
   return h+'</section>';
 }
+function quemHtml(P,nq){
+  if(!P.length){var tn=normTel(nq)||nq;
+    return '<div class="qn no"><div class="qn-b" style="text-align:center"><h3>Número não cadastrado</h3><p class="mut">'+esc(tn.length>=10?fmtTel(tn):nq)+'</p><p class="mut">Nenhum dos seus contatos tem este telefone, em nenhuma obra.</p></div><div class="qn-a"><button class="btn primary" data-act="qn-new" data-tel="'+esc(tn)+'">Cadastrar este número</button><button class="btn" data-act="qn-clear">Limpar busca</button></div></div>'}
+  var seen={},tels=[];P.forEach(function(p){if(!seen[p.tel]){seen[p.tel]=1;tels.push(p.tel)}});
+  return tels.map(function(t){
+    var c=cOf(t),ps=P.filter(function(p){return p.tel===t});
+    return '<div class="qn"><div class="qn-h">Quem é este número</div><div class="qn-b"><h3>'+esc(c.nome||fmtTel(t))+'</h3>'+(c.empresa?'<p>'+esc(c.empresa)+'</p>':'')+'<p class="mut">'+esc(fmtTel(t))+'</p></div>'
+     +'<div class="qn-b" style="padding-top:0;padding-bottom:4px"><b class="mut" style="font-size:12px;letter-spacing:.12em">'+ps.length+(ps.length===1?' VÍNCULO':' VÍNCULOS')+'</b></div><ul class="qn-v">'
+     +ps.map(function(p){return '<li><span>'+esc(obraName(p.obra))+'<small>'+esc(catOf(p.categoria).nome)+' · '+esc(p.servico)+'</small></span><span>'+(p.nota?'★ '+p.nota:'')+'</span></li>'}).join('')
+     +'</ul><div class="qn-a"><a class="btn wa" href="https://wa.me/'+t+'" target="_blank" rel="noopener">WhatsApp</a><a class="btn" href="tel:+'+t+'">Ligar</a><button class="btn" data-act="qn-open" data-tel="'+t+'">Ver ficha</button></div></div>';
+  }).join('');
+}
 function renderList(){
-  var P=filtered(),q=ui.q.trim()!=='',narrow=q||ui.obra||ui.fcat||ui.fserv||ui.fnota,html='';
+  var P=filtered(),q=ui.q.trim()!=='',nq=numQuery(),narrow=q||ui.obra||ui.fcat||ui.fserv||ui.fnota,html='';
+  var av=$('#obraAviso');
+  if(nq){av.hidden=false;av.innerHTML='<span>Buscando em <b>todas as obras</b></span>'}
+  else if(ui.obra){av.hidden=false;av.innerHTML='<span>Mostrando só: <b>'+esc(ui.obra==='__none'?'Sem obra':obraName(ui.obra))+'</b></span><button type="button" data-obra-todas="1">Ver todas</button>'}
+  else{av.hidden=true;av.innerHTML=''}
+  if(nq)html+=quemHtml(P,nq);
   Object.keys(ui.opens).forEach(function(k){if(!db.categorias.some(function(c){return c.id===k}))delete ui.opens[k]});
   var nCat=0;
   db.categorias.forEach(function(c){
@@ -720,7 +739,7 @@ function renderList(){
   });
   if(!q&&Object.keys(ui.opens).length>1)html='<div class="ac-tools"><button type="button" class="ac-all" data-act="close-all">Fechar todas</button></div>'+html;
   if(!db.papeis.length)html+='<p class="empty-all">Sua agenda está vazia. Toque em “+ Novo contato” para começar.</p>';
-  else if(narrow&&!P.length)html+='<p class="empty-all">'+((ui.obra&&!q&&!ui.fcat&&!ui.fserv&&!ui.fnota)?'Nenhum contato nesta obra ainda. Toque em “+ Novo contato” para adicionar.':'Nada encontrado com esses filtros.')+(ui.obra&&(q||ui.fcat||ui.fserv||ui.fnota)?' <button type="button" class="lnk" data-obra-todas="1">Buscar em todas as obras</button>':'')+'</p>';
+  else if(narrow&&!P.length&&!nq)html+='<p class="empty-all">'+((ui.obra&&!q&&!ui.fcat&&!ui.fserv&&!ui.fnota)?'Nenhum contato nesta obra ainda. Toque em “+ Novo contato” para adicionar.':'Nada encontrado com esses filtros.')+(ui.obra&&(q||ui.fcat||ui.fserv||ui.fnota)?' <button type="button" class="lnk" data-obra-todas="1">Buscar em todas as obras</button>':'')+'</p>';
   acc.innerHTML=html;
 }
 var f0=db.categorias.find(function(c){return db.papeis.some(function(p){return p.categoria===c.id})});
@@ -940,7 +959,7 @@ function sheetContact(){
        +'<div class="row2" style="margin-top:0"><button class="btn primary" data-act="merge-yes">Sim, trocar o número</button><button class="btn" data-act="merge-no">Cancelar</button></div></div>';
     }else h+='<div class="row2"><button class="btn primary" data-act="save-edit">Salvar</button><button class="btn" data-act="cancel-edit">Cancelar</button></div>';
   }else{
-    h+='<div class="telrow"><p class="telbig">'+esc(fmtTel(c.tel))+'</p><button class="btn sm" data-act="copytel">Copiar número</button></div><div class="acts"><a class="btn wa" href="https://wa.me/'+c.tel+'" target="_blank" rel="noopener">WhatsApp</a><a class="btn" href="tel:+'+c.tel+'">Ligar</a><button class="btn" data-act="fav">'+(c.fav?'★ Favorito':'☆ Favoritar')+'</button><button class="btn" data-act="edit">Editar</button></div>';
+    h+='<div class="telrow"><p class="telbig">'+esc(fmtTel(c.tel))+'</p><div class="tbtns"><button class="btn sm" data-act="copytel">Copiar número</button><button class="btn sm ag" data-act="agenda">Salvar na agenda</button><button class="btn sm ico" data-act="share" aria-label="Compartilhar contato" title="Compartilhar contato"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="5.5" r="2.6"/><circle cx="18" cy="18.5" r="2.6"/><path d="m8.3 10.8 7.4-4M8.3 13.2l7.4 4"/></svg></button></div></div><div class="acts"><a class="btn wa" href="https://wa.me/'+c.tel+'" target="_blank" rel="noopener">WhatsApp</a><a class="btn" href="tel:+'+c.tel+'">Ligar</a><button class="btn" data-act="fav">'+(c.fav?'★ Favorito':'☆ Favoritar')+'</button><button class="btn" data-act="edit">Editar</button></div>';
   }
   var det=ps,outras=[];
   if(ui.obra){
@@ -1048,6 +1067,9 @@ acc.addEventListener('click',function(e){
     var box=el.closest('.ac');if(box)box.querySelectorAll('.sg-h').forEach(function(b){ui.closed[b.dataset.key]=true});renderList();
   }else if(a==='sv'){ui.closed[el.dataset.key]=!ui.closed[el.dataset.key];renderList()}
   else if(a==='row'){var p=db.papeis.find(function(x){return x.id===el.dataset.id});if(p)openContact(p.tel)}
+  else if(a==='qn-open')openContact(el.dataset.tel);
+  else if(a==='qn-clear'){ui.q='';$('#q').value='';renderList()}
+  else if(a==='qn-new'){var tt=el.dataset.tel;S={type:'new'};openSheet();var ft=$('#f-tel');if(ft){ft.value=tt.length>=10?fmtTel(tt):tt;ft.dispatchEvent(new Event('input',{bubbles:true}))}}
 });
 $('#banner').addEventListener('click',function(e){
   if(e.target.closest('[data-act="clear-ex"]'))clearExamples();
@@ -1142,6 +1164,8 @@ sheet.addEventListener('click',function(e){
   else if(a==='merge-yes')mergeContact();
   else if(a==='merge-no'){S.mergeTel=null;refreshSheet()}
   else if(a==='copytel'){copy(fmtTel(S.tel))}
+  else if(a==='agenda'){salvarAgenda(S.tel)}
+  else if(a==='share'){compartilhar(S.tel)}
   else if(a==='install'){fzInstalar()}
   else if(a==='fav'){var cc=db.contatos.find(function(x){return x.tel===S.tel});if(cc){if(cc.fav)delete cc.fav;else cc.fav=true;commit()}}
   else if(a==='add-papel'){S.adding=true;refreshSheet()}
@@ -1185,6 +1209,30 @@ sheet.addEventListener('click',function(e){
 function copy(t){
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(function(){toast('Copiado')},function(){legacyCopy(t)});
   else legacyCopy(t);
+}
+function vcEsc(t){return String(t||'').replace(/\\/g,'\\\\').replace(/\r?\n/g,'\\n').replace(/([,;])/g,'\\$1')}
+function vcardOf(c){
+  var nome='FZ – '+(c.nome||fmtTel(c.tel));
+  return ['BEGIN:VCARD','VERSION:3.0','FN:'+vcEsc(nome),'N:;'+vcEsc(nome)+';;;'].concat(c.empresa?['ORG:'+vcEsc(c.empresa)]:[],['TEL;TYPE=CELL:+'+c.tel,'UID:flashzap-'+c.tel,'END:VCARD']).join('\r\n')+'\r\n';
+}
+function salvarAgenda(tel){
+  var c=cOf(tel),nomeArq=((c.nome||tel).replace(/[^\w\u00C0-\u017F -]+/g,'').trim()||tel)+'.vcf';
+  try{
+    var blob=new Blob([vcardOf(c)],{type:'text/vcard;charset=utf-8'});
+    var ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+    if(ios&&window.File&&navigator.canShare){
+      var f=new File([blob],nomeArq,{type:'text/vcard'});
+      if(navigator.canShare({files:[f]})){navigator.share({files:[f]}).catch(function(){});return}
+    }
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nomeArq;document.body.appendChild(a);a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1500);
+    toast('Arquivo do contato baixado. Toque nele para salvar na agenda.');
+  }catch(e){toast('Não foi possível salvar na agenda neste aparelho.')}
+}
+function compartilhar(tel){
+  var c=cOf(tel),txt=(c.nome||fmtTel(tel))+(c.empresa?'\n'+c.empresa:'')+'\n'+fmtTel(tel);
+  if(navigator.share){navigator.share({title:c.nome||fmtTel(tel),text:txt}).catch(function(e){if(!e||e.name!=='AbortError')copy(txt)})}
+  else copy(txt);
 }
 function legacyCopy(t){try{var x=document.createElement('textarea');x.value=t;x.setAttribute('readonly','');x.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(x);x.select();x.setSelectionRange(0,999);var ok=document.execCommand('copy');x.remove();toast(ok?'Copiado':'Não foi possível copiar neste ambiente')}catch(e){toast('Não foi possível copiar neste ambiente')}}
 function exportJson(){
