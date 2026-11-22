@@ -535,7 +535,7 @@ document.addEventListener('DOMContentLoaded',function(){
 <script>
 (function(){
 'use strict';
-var KEY='obrafonica.v1', GHKEY='obrafonica.gh', THKEY='obrafonica.tema', OBRAKEY='obrafonica.obra';
+var KEY='obrafonica.v1', GHKEY='obrafonica.gh', THKEY='obrafonica.tema', OBRAKEY='obrafonica.obra', DIVKEY='flashzap.divulga';
 var HUES=[44,208,152,270,348,180,24,300,100,230];
 var PAD=3, HEAD=24, SEMCLASS='Sem classificação';
 var $=function(s){return document.querySelector(s)};
@@ -1043,6 +1043,7 @@ function sheetSettings(){
     }
   }
   h+=instBlock();
+  h+='<h3>Compartilhar contato</h3><label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer"><input type="checkbox" data-act="divulga" style="width:22px;height:22px;flex:none;margin:0"'+(lsGet(DIVKEY)==='0'?'':' checked')+'><span>Incluir uma linha sobre o FlashZap Business ao compartilhar um contato</span></label>';
   h+='<h3>Cópia de segurança</h3><p class="mut" style="margin:0 0 8px">Baixe uma cópia de vez em quando. Ao restaurar, ela substitui tudo o que está no app agora.</p><div class="row2" style="margin-top:0"><button class="btn" data-act="export">Baixar cópia</button><button class="btn" data-act="import">Restaurar cópia</button></div><input type="file" id="imp" accept="application/json,.json" hidden>';
   if(S.pendingImport)h+='<p class="confirm" style="margin-top:10px">Substituir os '+db.contatos.length+' contatos atuais pelos '+S.pendingImport.contatos.length+' da cópia? <button class="btn sm danger" data-act="import-yes">Substituir</button><button class="btn sm" data-act="import-no">Cancelar</button></p>';
   return h;
@@ -1166,6 +1167,7 @@ sheet.addEventListener('click',function(e){
   else if(a==='copytel'){copy(fmtTel(S.tel))}
   else if(a==='agenda'){salvarAgenda(S.tel)}
   else if(a==='share'){compartilhar(S.tel)}
+  else if(a==='divulga'){lsSet(DIVKEY,el.checked?'1':'0');toast(el.checked?'Divulgação ligada':'Divulgação desligada')}
   else if(a==='install'){fzInstalar()}
   else if(a==='fav'){var cc=db.contatos.find(function(x){return x.tel===S.tel});if(cc){if(cc.fav)delete cc.fav;else cc.fav=true;commit()}}
   else if(a==='add-papel'){S.adding=true;refreshSheet()}
@@ -1230,7 +1232,7 @@ function salvarAgenda(tel){
   }catch(e){toast('Não foi possível salvar na agenda neste aparelho.')}
 }
 function compartilhar(tel){
-  var c=cOf(tel),txt=(c.nome||fmtTel(tel))+(c.empresa?'\n'+c.empresa:'')+'\n'+fmtTel(tel);
+  var c=cOf(tel),txt=(c.nome||fmtTel(tel))+(c.empresa?'\n'+c.empresa:'')+'\n'+fmtTel(tel)+(lsGet(DIVKEY)==='0'?'':'\n\nSalvo no FlashZap Business, a agenda de contatos de obra. flashzapbusiness.com.br/?origem=compartilhar');
   if(navigator.share){navigator.share({title:c.nome||fmtTel(tel),text:txt}).catch(function(e){if(!e||e.name!=='AbortError')copy(txt)})}
   else copy(txt);
 }
