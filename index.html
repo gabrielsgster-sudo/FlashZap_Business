@@ -1232,7 +1232,7 @@ function salvarAgenda(tel){
   }catch(e){toast('Não foi possível salvar na agenda neste aparelho.')}
 }
 function compartilhar(tel){
-  var c=cOf(tel),txt=(c.nome||fmtTel(tel))+(c.empresa?'\n'+c.empresa:'')+'\n'+fmtTel(tel)+(lsGet(DIVKEY)==='0'?'':'\n\nSalvo no FlashZap Business, a agenda de contatos de obra. flashzapbusiness.com.br/?origem=compartilhar');
+  var c=cOf(tel),txt=(c.nome||fmtTel(tel))+(c.empresa?'\n'+c.empresa:'')+'\n'+fmtTel(tel)+(lsGet(DIVKEY)==='0'?'':'\n\nSalvo no FlashZap Business, a agenda de contatos de obra. flashzapbusiness.com.br');
   if(navigator.share){navigator.share({title:c.nome||fmtTel(tel),text:txt}).catch(function(e){if(!e||e.name!=='AbortError')copy(txt)})}
   else copy(txt);
 }
