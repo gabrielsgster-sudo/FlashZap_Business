@@ -126,7 +126,7 @@ button,input,select{font:inherit;color:inherit}
 .x:disabled{opacity:.35;cursor:not-allowed}
 #sheet h3{margin:20px 0 8px;font:600 14px/1 var(--font-d);text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
 .telrow{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;margin:14px 0 10px}
-.telrow .telbig{margin:0;font-size:clamp(20px,5.6vw,24px);white-space:nowrap;flex:1 1 100%}.tbtns{display:flex;gap:8px;flex-wrap:wrap}.btn.ag{border:2px solid var(--ac);font-weight:700}.btn.ico{width:44px;padding:0;display:inline-flex;align-items:center;justify-content:center}.cls-av{display:flex;flex-direction:column;gap:6px;margin:10px 0 6px;padding:10px 12px;border:1px solid var(--ac);border-radius:8px;background:var(--surface);font-weight:600;font-size:14px}.cls-av>div{display:flex;align-items:center;justify-content:space-between;gap:8px}.cls-av button{background:none;border:0;padding:6px 4px;font:inherit;font-weight:700;color:var(--ink);text-decoration:underline;cursor:pointer}.ag-list{display:flex;flex-direction:column;margin:8px 0 0}.ag-it{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer}.ag-it[aria-disabled=true]{opacity:.55;cursor:default}.ag-ck{width:24px;height:24px;border-radius:5px;border:2px solid var(--mut);flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1}.ag-ck.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}.ag-tg{font-size:12px;font-weight:600;border-radius:999px;padding:3px 9px;background:var(--surface);border:1px solid var(--ac);flex:none}.qn{margin:10px 0 4px;background:var(--surface);border:2px solid var(--ink);border-radius:12px;overflow:hidden}.qn.no{border-style:dashed;border-color:var(--ac)}.qn-h{padding:7px 14px;background:var(--ink);color:var(--bg);font:700 11px/1.2 var(--font-d);letter-spacing:.2em;text-transform:uppercase}.qn-b{padding:14px 14px 8px}.qn-b h3{margin:0;font:700 28px/1.05 var(--font-d);text-transform:uppercase}.qn-b p{margin:4px 0 0}.qn-v{list-style:none;margin:6px 0 0;padding:0 10px;display:flex;flex-direction:column;gap:6px}.qn-v li{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:6px;background:var(--bg);font-size:14px}.qn-v small{display:block;color:var(--mut)}.qn-a{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px 14px}.qn-a .btn{flex:1 1 110px}
+.telrow .telbig{margin:0;font-size:clamp(20px,5.6vw,24px);white-space:nowrap;flex:1 1 100%}.tbtns{display:flex;gap:8px;flex-wrap:wrap}.btn.ico{width:44px;padding:0;display:inline-flex;align-items:center;justify-content:center}.cls-av{display:flex;flex-direction:column;gap:6px;margin:10px 0 6px;padding:10px 12px;border:1px solid var(--ac);border-radius:8px;background:var(--surface);font-weight:600;font-size:14px}.cls-av>div{display:flex;align-items:center;justify-content:space-between;gap:8px}.cls-av button{background:none;border:0;padding:6px 4px;font:inherit;font-weight:700;color:var(--ink);text-decoration:underline;cursor:pointer}.ag-list{display:flex;flex-direction:column;margin:8px 0 0}.ag-it{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer}.ag-it[aria-disabled=true]{opacity:.55;cursor:default}.ag-ck{width:24px;height:24px;border-radius:5px;border:2px solid var(--mut);flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1}.ag-ck.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}.ag-tg{font-size:12px;font-weight:600;border-radius:999px;padding:3px 9px;background:var(--surface);border:1px solid var(--ac);flex:none}.qn{margin:10px 0 4px;background:var(--surface);border:2px solid var(--ink);border-radius:12px;overflow:hidden}.qn.no{border-style:dashed;border-color:var(--ac)}.qn-h{padding:7px 14px;background:var(--ink);color:var(--bg);font:700 11px/1.2 var(--font-d);letter-spacing:.2em;text-transform:uppercase}.qn-b{padding:14px 14px 8px}.qn-b h3{margin:0;font:700 28px/1.05 var(--font-d);text-transform:uppercase}.qn-b p{margin:4px 0 0}.qn-v{list-style:none;margin:6px 0 0;padding:0 10px;display:flex;flex-direction:column;gap:6px}.qn-v li{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:6px;background:var(--bg);font-size:14px}.qn-v small{display:block;color:var(--mut)}.qn-a{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px 14px}.qn-a .btn{flex:1 1 110px}
 .telrow .btn{white-space:nowrap;flex:none}
 .telbig{font:600 24px/1.1 var(--font-b);font-variant-numeric:tabular-nums;margin:14px 0 10px}
 .acts{display:flex;flex-wrap:wrap;gap:8px}
@@ -537,7 +537,7 @@ document.addEventListener('DOMContentLoaded',function(){
 'use strict';
 var KEY='obrafonica.v1', GHKEY='obrafonica.gh', THKEY='obrafonica.tema', OBRAKEY='obrafonica.obra', DIVKEY='flashzap.divulga';
 var HUES=[44,208,152,270,348,180,24,300,100,230];
-var PAD=3, HEAD=24, SEMCLASS='Sem classificação', CLS='__cls';
+var PAD=3, HEAD=24, SEMCLASS='A classificar', OLDSEM='Sem classificação', CLS='__cls';
 var $=function(s){return document.querySelector(s)};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
 var now=function(){return new Date().toISOString()};
@@ -559,7 +559,8 @@ function exampleDb(){
 }
 function temExemplos(){return !!db.exemplo&&db.obras.some(function(o){return o.id==='oa'||o.id==='ob'})}
 function loadLocal(){var r=lsGet(KEY);if(r){try{var d=JSON.parse(r);if(d&&d.papeis&&d.categorias)return d}catch(e){}}return null}
-var db=loadLocal()||exampleDb();
+function semFix(d){if(!d)return d;(d.papeis||[]).forEach(function(p){if(p.servico===OLDSEM)p.servico=SEMCLASS});if(Array.isArray(d.servicos))d.servicos=d.servicos.filter(function(x){return x!==OLDSEM});return d}
+var db=semFix(loadLocal())||exampleDb();
 (function(){var c=function(a,b){return String(a).localeCompare(String(b),'pt-BR',{sensitivity:'base'})};db.categorias.sort(function(a,b){return c(a.nome,b.nome)});db.servicos.sort(c)})();
 var ui={favs:false,q:'',obra:lsGet(OBRAKEY)||'',fcat:'',fserv:'',fnota:0,opens:{},closed:{}};
 function realObra(){return (ui.obra&&ui.obra!=='__none')?ui.obra:''}
@@ -645,7 +646,7 @@ async function ghPush(retry){
   }catch(e){setSync('erro',netMsg(e))}
 }
 function adopt(remote,msg){
-  remote.exemplo=false;db=remote;
+  remote.exemplo=false;db=semFix(remote);
   ['obras','categorias','servicos','contatos','papeis'].forEach(function(k){if(!Array.isArray(db[k]))db[k]=[]});
   saveLocal();render();toast(msg||'Dados atualizados a partir do GitHub');
 }
@@ -796,6 +797,14 @@ function movePapel(id,catId){
   if(dup){if(p.nota&&!dup.nota)dup.nota=p.nota;dup.hist=(dup.hist||[]).concat(p.hist||[],[entry]);db.papeis=db.papeis.filter(function(x){return x!==p})}
   else{p.hist=(p.hist||[]).concat([entry]);p.categoria=catId}
   ui.opens[catId]=true;commit();toast(nome+' → '+catOf(catId).nome);
+}
+function moveObra(id,oid){
+  var p=db.papeis.find(function(x){return x.id===id});
+  if(!p||p.obra===oid){refreshSheet();return}
+  var dup=db.papeis.find(function(x){return x!==p&&x.tel===p.tel&&x.obra===oid&&x.servico===p.servico&&x.categoria===p.categoria});
+  if(dup){if(p.nota&&!dup.nota)dup.nota=p.nota;dup.hist=(dup.hist||[]).concat(p.hist||[]);db.papeis=db.papeis.filter(function(x){return x!==p})}
+  else p.obra=oid;
+  commit();toast('Obra: '+obraName(oid));
 }
 function servNew(id){
   var n=($('#sv-new')||{value:''}).value.trim();if(!n)return toast('Digite o nome da nova função');
@@ -1045,7 +1054,7 @@ function sheetContact(){
        +'<div class="row2" style="margin-top:0"><button class="btn primary" data-act="merge-yes">Sim, trocar o número</button><button class="btn" data-act="merge-no">Cancelar</button></div></div>';
     }else h+='<div class="row2"><button class="btn primary" data-act="save-edit">Salvar</button><button class="btn" data-act="cancel-edit">Cancelar</button></div>';
   }else{
-    h+='<div class="telrow"><p class="telbig">'+esc(fmtTel(c.tel))+'</p><div class="tbtns"><button class="btn sm" data-act="copytel">Copiar número</button><button class="btn sm ag" data-act="agenda">Salvar na agenda</button><button class="btn sm ico" data-act="share" aria-label="Compartilhar contato" title="Compartilhar contato"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="5.5" r="2.6"/><circle cx="18" cy="18.5" r="2.6"/><path d="m8.3 10.8 7.4-4M8.3 13.2l7.4 4"/></svg></button></div></div><div class="acts"><a class="btn wa" href="https://wa.me/'+c.tel+'" target="_blank" rel="noopener">WhatsApp</a><a class="btn" href="tel:+'+c.tel+'">Ligar</a><button class="btn" data-act="fav">'+(c.fav?'★ Favorito':'☆ Favoritar')+'</button><button class="btn" data-act="edit">Editar</button></div>';
+    h+='<div class="telrow"><p class="telbig">'+esc(fmtTel(c.tel))+'</p><div class="tbtns"><button class="btn sm" data-act="copytel">Copiar número</button><button class="btn sm ico" data-act="share" aria-label="Compartilhar contato" title="Compartilhar contato"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="5.5" r="2.6"/><circle cx="18" cy="18.5" r="2.6"/><path d="m8.3 10.8 7.4-4M8.3 13.2l7.4 4"/></svg></button></div></div><div class="acts"><a class="btn wa" href="https://wa.me/'+c.tel+'" target="_blank" rel="noopener">WhatsApp</a><a class="btn" href="tel:+'+c.tel+'">Ligar</a><button class="btn" data-act="fav">'+(c.fav?'★ Favorito':'☆ Favoritar')+'</button><button class="btn" data-act="edit">Editar</button></div>';
   }
   var det=ps,outras=[];
   if(ui.obra){
@@ -1059,7 +1068,8 @@ function sheetContact(){
   h+='<h3>Serviços e obras</h3><ul class="pps">';
   det.forEach(function(p){
     var cat=catOf(p.categoria),last=(p.hist||[]).slice(-1)[0];
-    h+='<li class="pp"><div class="pp-top"><strong>'+esc(obraName(p.obra))+'</strong></div>'
+    h+='<li class="pp"><div class="pp-top"><strong>'+esc(obraName(p.obra))+'</strong>'+(S.editObra!==p.id?'<button class="btn sm" data-act="obra-edit" data-id="'+p.id+'">Mudar obra</button>':'')+'</div>'
+      +(S.editObra===p.id?'<div class="mv"><small>Obra</small>'+db.obras.map(function(o){return '<button class="chipbtn'+(o.id===p.obra?' on':'')+'" data-act="obra-set" data-id="'+p.id+'" data-obra="'+esc(o.id)+'">'+esc(o.nome)+'</button>'}).join('')+'<button class="chipbtn'+(!p.obra?' on':'')+'" data-act="obra-set" data-id="'+p.id+'" data-obra="">Sem obra</button><button class="btn sm" data-act="obra-no">Cancelar</button></div>':'')
       +'<div class="mv"><small>Setor</small>'
       +(S.editCat!==p.id?'<span class="chipbtn on" data-h style="--h:'+cat.h+';cursor:default">'+esc(cat.nome)+'</span><button class="btn sm" data-act="cat-edit" data-id="'+p.id+'">Mudar setor</button>':db.categorias.map(function(k){return '<button class="chipbtn'+(k.id===p.categoria?' on':'')+'" data-h data-act="move" data-id="'+p.id+'" data-cat="'+k.id+'" style="--h:'+k.h+'">'+esc(k.nome)+'</button>'}).join('')
       +(S.newCatFor===p.id?'<span class="confirm" style="flex:1 1 100%"><input id="mv-new" placeholder="Nome do novo setor" autocomplete="off" style="flex:1;min-width:0;height:36px;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:0 10px;font-size:16px"><button class="btn sm primary" data-act="move-new-ok" data-id="'+p.id+'">Criar e mover</button><button class="btn sm" data-act="move-new-no">Cancelar</button></span>':'<button class="chipbtn novo" data-act="move-new" data-id="'+p.id+'">+ Novo setor</button>'))
@@ -1242,6 +1252,9 @@ sheet.addEventListener('click',function(e){
   else if(a==='tog')el.setAttribute('aria-pressed',el.getAttribute('aria-pressed')==='true'?'false':'true');
   else if(a==='move'){S.editCat=null;S.newCatFor=null;movePapel(id,el.dataset.cat);refreshSheet()}
   else if(a==='cat-edit'){S.editCat=id;refreshSheet()}
+  else if(a==='obra-edit'){S.editObra=id;refreshSheet()}
+  else if(a==='obra-no'){S.editObra=null;refreshSheet()}
+  else if(a==='obra-set'){S.editObra=null;moveObra(id,el.dataset.obra||'')}
   else if(a==='serv-edit'){S.editServ=id;refreshSheet()}
   else if(a==='serv-no'){S.editServ=null;S.newServFor=null;refreshSheet()}
   else if(a==='serv-new'){S.newServFor=id;refreshSheet();var si=$('#sv-new');if(si)si.focus()}
@@ -1262,7 +1275,6 @@ sheet.addEventListener('click',function(e){
   else if(a==='ag-tog'){var it=S.items[+el.dataset.i];if(it&&!it.bad){it.on=!it.on;var xo=$('#ag-obra-new');if(xo)S.obraNew=xo.value;refreshSheet()}}
   else if(a==='ag-go')agGo();
   else if(a==='copytel'){copy(fmtTel(S.tel))}
-  else if(a==='agenda'){salvarAgenda(S.tel)}
   else if(a==='share'){compartilhar(S.tel)}
   else if(a==='divulga'){lsSet(DIVKEY,el.checked?'1':'0');toast(el.checked?'Divulgação ligada':'Divulgação desligada')}
   else if(a==='install'){fzInstalar()}
@@ -1308,25 +1320,6 @@ sheet.addEventListener('click',function(e){
 function copy(t){
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(function(){toast('Copiado')},function(){legacyCopy(t)});
   else legacyCopy(t);
-}
-function vcEsc(t){return String(t||'').replace(/\\/g,'\\\\').replace(/\r?\n/g,'\\n').replace(/([,;])/g,'\\$1')}
-function vcardOf(c){
-  var nome='FZ – '+(c.nome||fmtTel(c.tel));
-  return ['BEGIN:VCARD','VERSION:3.0','FN:'+vcEsc(nome),'N:;'+vcEsc(nome)+';;;'].concat(c.empresa?['ORG:'+vcEsc(c.empresa)]:[],['TEL;TYPE=CELL:+'+c.tel,'UID:flashzap-'+c.tel,'END:VCARD']).join('\r\n')+'\r\n';
-}
-function salvarAgenda(tel){
-  var c=cOf(tel),nomeArq=((c.nome||tel).replace(/[^\w\u00C0-\u017F -]+/g,'').trim()||tel)+'.vcf';
-  try{
-    var blob=new Blob([vcardOf(c)],{type:'text/vcard;charset=utf-8'});
-    var ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-    if(ios&&window.File&&navigator.canShare){
-      var f=new File([blob],nomeArq,{type:'text/vcard'});
-      if(navigator.canShare({files:[f]})){navigator.share({files:[f]}).catch(function(){});return}
-    }
-    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nomeArq;document.body.appendChild(a);a.click();
-    setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1500);
-    toast('Arquivo do contato baixado. Toque nele para salvar na agenda.');
-  }catch(e){toast('Não foi possível salvar na agenda neste aparelho.')}
 }
 function compartilhar(tel){
   var c=cOf(tel),txt=(c.nome||fmtTel(tel))+(c.empresa?'\n'+c.empresa:'')+'\n'+fmtTel(tel)+(lsGet(DIVKEY)==='0'?'':'\n\nSalvo no FlashZap Business, a agenda de contatos de obra. flashzapbusiness.com.br');
