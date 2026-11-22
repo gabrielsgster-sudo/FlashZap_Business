@@ -729,13 +729,8 @@ function renderList(){
   else if(ui.obra){av.hidden=false;av.innerHTML='<span>Mostrando só: <b>'+esc(ui.obra==='__none'?'Sem obra':obraName(ui.obra))+'</b></span><button type="button" data-obra-todas="1">Ver todas</button>'}
   else{av.hidden=true;av.innerHTML=''}
   if(nq)html+=quemHtml(P,nq);
-  Object.keys(ui.opens).forEach(function(k){if(!db.categorias.some(function(c){return c.id===k}))delete ui.opens[k]});
+  Object.keys(ui.opens).forEach(function(k){if(k!==CLS&&!db.categorias.some(function(c){return c.id===k}))delete ui.opens[k]});
   var nCat=0;
-  if(!q&&!nq){
-    var tSet={},tFun={};db.papeis.forEach(function(p){if(p.categoria===CLS)tSet[p.tel]=1;if(p.servico===SEMCLASS)tFun[p.tel]=1});
-    var nS=Object.keys(tSet).length,nF=Object.keys(tFun).length;
-    if(nS||nF)html+='<div class="cls-av">'+(nS?'<div><span>'+nS+(nS===1?' contato sem setor':' contatos sem setor')+'</span><button type="button" data-act="cls-set">Ver</button></div>':'')+(nF?'<div><span>'+nF+(nF===1?' contato sem função':' contatos sem função')+'</span><button type="button" data-act="cls-fun">Ver</button></div>':'')+'</div>';
-  }
   var clsItems=P.filter(function(p){return p.categoria===CLS});
   if(clsItems.length){nCat++;html+=catSection(catOf(CLS),clsItems,q?true:!!ui.opens[CLS],q)}
   db.categorias.forEach(function(c){
@@ -1161,8 +1156,6 @@ acc.addEventListener('click',function(e){
   }else if(a==='sv'){ui.closed[el.dataset.key]=!ui.closed[el.dataset.key];renderList()}
   else if(a==='row'){var p=db.papeis.find(function(x){return x.id===el.dataset.id});if(p)openContact(p.tel)}
   else if(a==='qn-open')openContact(el.dataset.tel);
-  else if(a==='cls-set'){ui.fcat='';ui.fserv='';ui.opens[CLS]=true;renderList();var hd0=acc.querySelector('.ac-h[data-cat="'+CLS+'"]');if(hd0)hd0.scrollIntoView({block:'nearest'})}
-  else if(a==='cls-fun'){ui.fserv=SEMCLASS;render()}
   else if(a==='qn-clear'){ui.q='';$('#q').value='';renderList()}
   else if(a==='qn-new'){var tt=el.dataset.tel;S={type:'new'};openSheet();var ft=$('#f-tel');if(ft){ft.value=tt.length>=10?fmtTel(tt):tt;ft.dispatchEvent(new Event('input',{bubbles:true}))}}
 });
